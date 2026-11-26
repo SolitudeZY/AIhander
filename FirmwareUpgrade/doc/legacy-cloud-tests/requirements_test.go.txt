@@ -1,0 +1,409 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"encoding/json"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"firmwareupgrade/internal/protocol"
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
+)
+
+func requirementsApp(t *testing.T) *app {
+	t.Helper()
+	dir := t.TempDir()
+	db, err := sql.Open("sqlite", filepath.Join(dir, "cloud.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Close() })
+	if err := configureDatabase(db); err != nil {
+		t.Fatal(err)
+	}
+	if err := initSchema(db); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(dir, "uploads"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	return &app{db: db, dataDir: dir, hub: &hub{sessions: map[string]*session{}}}
+}
+func callCloud(a *app, method, path, token, body string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(method, path, strings.NewReader(body))
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	out := httptest.NewRecorder()
+	a.routes().ServeHTTP(out, req)
+	return out
+}
+func seedRequirementsDevice(t *testing.T, a *app) string {
+	t.Helper()
+	token, err := registerDevice(a.db, protocol.RegisterRequest{DeviceID: "device-1", Name: "device", OS: "linux", Arch: "arm64", SKU: "RK3576", RuntimeVersion: "2.0", ModelVersion: "1.0", Address: "site"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return token
+}
+func TestRequirementsRegistrationAndMigration(t *testing.T) {
+	a := requirementsApp(t)
+	if err := initSchema(a.db); err != nil {
+		t.Fatal("migration must be repeatable", err)
+	}
+	body := `{"device_id":"device-1","name":"first","os":"linux","arch":"arm64","agent_version":"1","sku":"RK3576","runtime_version":"2","model_version":"3","address":"site"}`
+	first := callCloud(a, "POST", "/api/v1/agents/register", "", body)
+	if first.Code != 200 {
+		t.Fatal(first.Code, first.Body.String())
+	}
+	var registered map[string]string
+	json.Unmarshal(first.Body.Bytes(), &registered)
+	token := registered["device_token"]
+	if token == "" || registered["token"] != "" {
+		t.Fatal("canonical token not used", registered)
+	}
+	_, err := a.db.Exec(`UPDATE devices SET created_at='2020-01-01T00:00:00Z' WHERE id='device-1'`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	update := strings.Replace(body, `"name":"first"`, `"device_token":"`+token+`","name":"second"`, 1)
+	if got := callCloud(a, "POST", "/api/v1/agents/register", "", update); got.Code != 200 {
+		t.Fatal(got.Code, got.Body.String())
+	}
+	if got := callCloud(a, "POST", "/api/v1/agents/register", "", body); got.Code != 401 {
+		t.Fatal("repeat registration must authenticate", got.Code)
+	}
+	if got := callCloud(a, "POST", "/api/v1/agents/register", "", strings.Replace(body, `"sku":"RK3576"`, `"sku":""`, 1)); got.Code != 400 {
+		t.Fatal(got.Code)
+	}
+	if got := callCloud(a, "POST", "/api/v1/agents/register", "", strings.Replace(update, `"device_token"`, `"token"`, 1)); got.Code != 200 {
+		t.Fatal("legacy input alias", got.Code)
+	}
+	detail := callCloud(a, "GET", "/api/v1/devices/device-1", "", "")
+	var device map[string]any
+	json.Unmarshal(detail.Body.Bytes(), &device)
+	if detail.Code != 200 || device["created_at"] != "2020-01-01T00:00:00Z" || device["sku"] != "RK3576" || device["model_version"] != "3" || device["channel_count"] != nil || device["name"] != "second" {
+		t.Fatal(detail.Body.String())
+	}
+	if strings.Contains(detail.Body.String(), token) {
+		t.Fatal("device token leaked")
+	}
+	var count int
+	a.db.QueryRow(`SELECT COUNT(*) FROM devices`).Scan(&count)
+	if count != 1 {
+		t.Fatal(count)
+	}
+}
+
+func TestRequirementsManagementRoutesWithoutAdditionalAuthentication(t *testing.T) {
+	for _, route := range []struct {
+		method, path string
+		status       int
+	}{
+		{"GET", "/", 200},
+		{"GET", "/healthz", 200},
+		{"GET", "/api/v1/devices", 200},
+		{"GET", "/api/v1/files", 200},
+		{"GET", "/api/v1/events", 200},
+		{"GET", "/api/v1/alarms", 200},
+		{"POST", "/api/v1/files", 400},
+		{"POST", "/api/v1/deployments", 400},
+		{"POST", "/api/v1/deployments/missing/redispatch", 404},
+		{"POST", "/api/v1/devices/missing/video-channels/test", 404},
+		{"GET", "/api/v1/deployments/missing", 404},
+		{"DELETE", "/api/v1/system/database", 200},
+	} {
+		t.Run(route.method+" "+route.path, func(t *testing.T) {
+			a := requirementsApp(t)
+			out := callCloud(a, route.method, route.path, "", "")
+			if out.Code != route.status || out.Header().Get("WWW-Authenticate") != "" {
+				t.Fatalf("status=%d challenge=%q body=%s", out.Code, out.Header().Get("WWW-Authenticate"), out.Body.String())
+			}
+		})
+	}
+}
+
+func TestRequirementsCredentialRedaction(t *testing.T) {
+	item := videoChannelItemFromConfig("device-1", protocol.VideoChannelConfig{RTSPURL: "rtsp://user:secret@camera/live?channel=1&token=secret"})
+	data, _ := json.Marshal(item)
+	if strings.Contains(string(data), "secret") || !strings.Contains(item.RTSPURL, "channel=1") || !item.PasswordConfigured {
+		t.Fatal(string(data))
+	}
+	item = videoChannelItemFromConfig("device-1", protocol.VideoChannelConfig{RTSPURL: "rtsp://user:@camera/live"})
+	if item.PasswordConfigured {
+		t.Fatal("empty password reported as configured")
+	}
+}
+
+func TestRequirementsFailedDraftTestDoesNotChangeSavedObservation(t *testing.T) {
+	a := requirementsApp(t)
+	mockRequirementsAgent(t, a, func(msg protocol.Message) protocol.Message {
+		if msg.Type == "channelList" {
+			return protocol.New("channelListResult", protocol.VideoChannelListResult{Operate: true, Channels: []protocol.VideoChannelConfig{{ChannelID: "CH-1", RTSPURL: "rtsp://old-camera/live", Transport: "tcp", Revision: 5}}})
+		}
+		if msg.Type == "channelTest" {
+			return protocol.New("channelTestResult", protocol.VideoTestResult{Success: false, Message: "password=secret rtsp://user:secret@new-camera/live"})
+		}
+		return protocol.New("unexpected", nil)
+	})
+	_, err := a.db.Exec(`INSERT INTO channel_observations(device_id,channel_id,codec,resolution,last_test_at) VALUES('device-1','CH-1','H264','1280x720','old')`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := callCloud(a, "POST", "/api/v1/devices/device-1/video-channels/test", "", `{"channel_id":"CH-1","rtsp_url":"rtsp://new-camera/live","username":"user","password":"secret"}`)
+	if result.Code != 200 || strings.Contains(result.Body.String(), "secret") {
+		t.Fatal(result.Code, result.Body.String())
+	}
+	var last string
+	a.db.QueryRow(`SELECT last_test_at FROM channel_observations`).Scan(&last)
+	if last != "old" {
+		t.Fatal("draft changed saved observation", last)
+	}
+}
+
+func TestSavedChannelProbeUsesStoredCredentials(t *testing.T) {
+	a := requirementsApp(t)
+	observed := make(chan protocol.VideoTestRequest, 1)
+	mockRequirementsAgent(t, a, func(msg protocol.Message) protocol.Message {
+		if msg.Type == "channelList" {
+			return protocol.New("channelListResult", protocol.VideoChannelListResult{Operate: true, Channels: []protocol.VideoChannelConfig{{ChannelID: "CH-1", RTSPURL: "rtsp://saved-user:saved-secret@camera/live", Transport: "udp", Revision: 1}}})
+		}
+		var request protocol.VideoTestRequest
+		decodeData(msg.Data, &request)
+		observed <- request
+		return protocol.New("channelTestResult", protocol.VideoTestResult{Success: true, Codec: "HEVC", Resolution: "3840x2160"})
+	})
+	response := callCloud(a, "POST", "/api/v1/devices/device-1/video-channels/test", "", `{"channel_id":"CH-1"}`)
+	if response.Code != 200 || strings.Contains(response.Body.String(), "saved-secret") {
+		t.Fatal(response.Code, response.Body.String())
+	}
+	request := <-observed
+	if request.RTSPURL != "rtsp://saved-user:saved-secret@camera/live" || request.Transport != "udp" {
+		t.Fatal("saved connection settings were not preserved")
+	}
+	invalid := callCloud(a, "POST", "/api/v1/devices/device-1/video-channels/test", "", `{"channel_id":"CH-1","password":"new-secret"}`)
+	if invalid.Code != 400 {
+		t.Fatal(invalid.Code)
+	}
+}
+
+func uploadRequirementsFile(t *testing.T, a *app, contents string) *httptest.ResponseRecorder {
+	t.Helper()
+	var body bytes.Buffer
+	form := multipart.NewWriter(&body)
+	file, err := form.CreateFormFile("file", `C:\client\models\model.rknn`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	io.WriteString(file, contents)
+	form.Close()
+	req := httptest.NewRequest("POST", "/api/v1/files", &body)
+	req.Header.Set("Content-Type", form.FormDataContentType())
+	result := httptest.NewRecorder()
+	a.routes().ServeHTTP(result, req)
+	return result
+}
+func TestRequirementsFilesOptionalChecksumAndRanges(t *testing.T) {
+	a := requirementsApp(t)
+	token := seedRequirementsDevice(t, a)
+	for _, checksum := range []bool{false, true} {
+		a.uploadSHA256 = checksum
+		result := uploadRequirementsFile(t, a, "model-bytes")
+		if result.Code != 201 {
+			t.Fatal(result.Code, result.Body.String())
+		}
+		var file map[string]any
+		json.Unmarshal(result.Body.Bytes(), &file)
+		want := ""
+		if checksum {
+			sum := sha256.Sum256([]byte("model-bytes"))
+			want = hex.EncodeToString(sum[:])
+		}
+		if file["sha256"] != want || file["name"] != "model.rknn" {
+			t.Fatal(file)
+		}
+		for _, tc := range []struct {
+			token, span string
+			status      int
+		}{{"", "bytes=0-4", 401}, {token, "bytes=0-4", 206}, {token, "bytes=999-", 416}} {
+			req := httptest.NewRequest("GET", "/api/v1/agents/files/"+file["id"].(string), nil)
+			req.Header.Set("Authorization", "Bearer "+tc.token)
+			req.Header.Set("Range", tc.span)
+			out := httptest.NewRecorder()
+			a.routes().ServeHTTP(out, req)
+			if out.Code != tc.status {
+				t.Fatal(tc, out.Code)
+			}
+			if tc.status == 206 && out.Body.String() != "model" {
+				t.Fatal(out.Body.String())
+			}
+		}
+	}
+	a.uploadLimit = 256
+	if got := uploadRequirementsFile(t, a, strings.Repeat("x", 1024)); got.Code != 413 {
+		t.Fatal(got.Code, got.Body.String())
+	}
+	entries, _ := os.ReadDir(filepath.Join(a.dataDir, "uploads"))
+	if len(entries) != 2 {
+		t.Fatal("oversize left an uploaded file", len(entries))
+	}
+}
+
+func mockRequirementsAgent(t *testing.T, a *app, reply func(protocol.Message) protocol.Message) {
+	t.Helper()
+	token := seedRequirementsDevice(t, a)
+	server := httptest.NewServer(a.routes())
+	t.Cleanup(server.Close)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	headers := http.Header{"Authorization": []string{"Bearer " + token}}
+	conn, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(server.URL, "http")+"/api/v1/agents/connect", &websocket.DialOptions{HTTPHeader: headers})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { conn.CloseNow() })
+	go func() {
+		for {
+			var msg protocol.Message
+			if wsjson.Read(ctx, conn, &msg) != nil {
+				return
+			}
+			response := reply(msg)
+			response.RequestID = msg.RequestID
+			if wsjson.Write(ctx, conn, response.WithSource("agent")) != nil {
+				return
+			}
+		}
+	}()
+	deadline := time.Now().Add(time.Second)
+	for !a.hub.connected("device-1") {
+		if time.Now().After(deadline) {
+			t.Fatal("agent did not connect")
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
+func TestRequirementsVideoCredentialsTestAndRuntime(t *testing.T) {
+	a := requirementsApp(t)
+	channel := protocol.VideoChannelConfig{ChannelID: "CH-1", Name: "camera", RTSPURL: "rtsp://camera-user:private-password@camera/live", ModuleName: "fixed.rknn", Enabled: true, Transport: "tcp", Revision: 2}
+	commands := make(chan string, 20)
+	mockRequirementsAgent(t, a, func(msg protocol.Message) protocol.Message {
+		commands <- msg.Type
+		switch msg.Type {
+		case "channelList":
+			return protocol.New("channelListResult", protocol.VideoChannelListResult{Operate: true, Channels: []protocol.VideoChannelConfig{channel}})
+		case "channelTest":
+			return protocol.New("channelTestResult", protocol.VideoTestResult{Success: true, DurationMS: 25, Codec: "H264", Resolution: "1920x1080", Message: "private-password"})
+		case "channelSet":
+			var cfg protocol.VideoChannelConfig
+			decodeData(msg.Data, &cfg)
+			if !strings.Contains(cfg.RTSPURL, "private-password") {
+				return protocol.New("channelSet", protocol.VideoChannelResult{Error: "password was lost"})
+			}
+			cfg.Revision = 3
+			channel = cfg
+			return protocol.New("channelSet", protocol.VideoChannelResult{Operate: true, Channel: &cfg, Status: "offline", InputFPS: 30, Error: "rtsp://camera-user:private-password@camera/live"})
+		}
+		return protocol.New("unexpected", nil)
+	})
+	test := callCloud(a, "POST", "/api/v1/devices/device-1/video-channels/test", "", `{"channel_id":"CH-1","rtsp_url":"rtsp://camera/live","username":"camera-user","password":"private-password"}`)
+	if test.Code != 200 || strings.Contains(test.Body.String(), "private-password") {
+		t.Fatal(test.Code, test.Body.String())
+	}
+	if len(commands) != 2 || <-commands != "channelList" || <-commands != "channelTest" {
+		t.Fatal("test must not save configuration")
+	}
+	list := callCloud(a, "GET", "/api/v1/devices/device-1/video-channels", "", "")
+	var items []videoChannelItem
+	json.Unmarshal(list.Body.Bytes(), &items)
+	if list.Code != 200 || len(items) != 1 || !items[0].PasswordConfigured || items[0].LastTestAt == "" || items[0].Codec != "H264" || strings.Contains(list.Body.String(), "private-password") {
+		t.Fatal(list.Code, list.Body.String())
+	}
+	update := callCloud(a, "PUT", "/api/v1/devices/device-1/video-channels/CH-1", "", `{"name":"camera","rtsp_url":"rtsp://camera/live","expected_revision":2}`)
+	var item videoChannelItem
+	json.Unmarshal(update.Body.Bytes(), &item)
+	if update.Code != 200 || item.Status != "offline" || item.SyncStatus != "applied" || item.InputFPS != 0 || !item.PasswordConfigured || strings.Contains(update.Body.String(), "private-password") {
+		t.Fatal(update.Code, update.Body.String())
+	}
+	if got := callCloud(a, "PUT", "/api/v1/devices/device-1/video-channels/CH-1", "", `{"name":"camera","rtsp_url":"rtsp://camera/live","expected_revision":1}`); got.Code != 409 {
+		t.Fatal(got.Code, got.Body.String())
+	}
+	if got := callCloud(a, "DELETE", "/api/v1/devices/device-1/video-channels/missing", "", `{"expected_revision":1}`); got.Code != 404 {
+		t.Fatal(got.Code)
+	}
+	detail := callCloud(a, "GET", "/api/v1/devices/device-1", "", "")
+	if detail.Code != 200 || !strings.Contains(detail.Body.String(), `"channel_count":1`) {
+		t.Fatal(detail.Body.String())
+	}
+}
+
+func TestRequirementsVideoErrors(t *testing.T) {
+	a := requirementsApp(t)
+	seedRequirementsDevice(t, a)
+	for _, tc := range []struct {
+		body   string
+		status int
+	}{
+		{`{"name":"camera","rtsp_url":"https://camera/live"}`, 400},
+		{`{"name":"camera","rtsp_url":"rtsp://camera/live","transport":"quic"}`, 400},
+		{`{"name":"camera","rtsp_url":"rtsp://camera/live","model_name":"other.rknn"}`, 503},
+		{`{"name":"camera","rtsp_url":"rtsp://camera/live"}`, 400},
+	} {
+		if got := callCloud(a, "POST", "/api/v1/devices/device-1/video-channels", "", tc.body); got.Code != tc.status {
+			t.Fatal(tc, got.Code, got.Body.String())
+		}
+	}
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+	req := httptest.NewRequest("POST", "/api/v1/devices/device-1/video-channels/test", strings.NewReader(`{"rtsp_url":"rtsp://camera/live"}`)).WithContext(ctx)
+	out := httptest.NewRecorder()
+	a.routes().ServeHTTP(out, req)
+	if out.Code != 504 {
+		t.Fatal(out.Code, out.Body.String())
+	}
+}
+
+func TestRequirementsRedispatchIsTraceableAndDebounced(t *testing.T) {
+	a := requirementsApp(t)
+	seedRequirementsDevice(t, a)
+	file := uploadRequirementsFile(t, a, "model")
+	var uploaded map[string]any
+	json.Unmarshal(file.Body.Bytes(), &uploaded)
+	created := callCloud(a, "POST", "/api/v1/deployments", "", `{"name":"upgrade","file_id":"`+uploaded["id"].(string)+`","device_ids":["device-1"],"target_path":"models","version":"2"}`)
+	var deployment map[string]any
+	json.Unmarshal(created.Body.Bytes(), &deployment)
+	if created.Code != 201 {
+		t.Fatal(created.Body.String())
+	}
+	path := "/api/v1/deployments/" + deployment["id"].(string)
+	first := callCloud(a, "POST", path+"/redispatch", "", "")
+	if first.Code != 200 || !strings.Contains(first.Body.String(), `"waiting_count":1`) {
+		t.Fatal(first.Code, first.Body.String())
+	}
+	second := callCloud(a, "POST", path+"/redispatch", "", "")
+	if second.Code != 409 {
+		t.Fatal(second.Code)
+	}
+	detail := callCloud(a, "GET", path, "", "")
+	if detail.Code != 200 || !strings.Contains(detail.Body.String(), `"source":"cloud"`) {
+		t.Fatal(detail.Body.String())
+	}
+	var count int
+	a.db.QueryRow(`SELECT COUNT(*) FROM deployment_tasks`).Scan(&count)
+	if count != 1 {
+		t.Fatal(count)
+	}
+}

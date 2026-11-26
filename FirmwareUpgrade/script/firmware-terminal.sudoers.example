@@ -1,0 +1,25 @@
+# Example only; no automatic installation or account creation.
+# Keep the Agent service User=kickpi. Configure its terminal object with:
+# {"enabled":true,"shells":["/bin/bash"],"max_sessions":2,"run_as_user":"edgeops"}
+# Empty/omitted run_as_user retains the Agent-account compatibility mode.
+# Windows rejects nonempty run_as_user. Isolated mode has no shell fallback.
+#
+# Provision edgeops separately with home /home/edgeops, no sudo/adm/docker/
+# systemd-journal groups and no reboot/shutdown Polkit grant. Restrict sensitive
+# Agent files, deployment/configuration paths and credentials explicitly;
+# this account is not a container and can still read world-readable files.
+# Install the sibling firmware-terminal-shell as root:root 0755 at the exact
+# path below, in root-owned real directories with no group/world write access.
+# The launcher uses a clean environment, fixed home and Bash without profiles.
+#
+# Review with visudo -cf, then install this rule as root:root 0440 under
+# /etc/sudoers.d/firmware-terminal. Verify the effective sudo policy: other
+# existing rules must not grant edgeops extra privileges. Do not add SETENV,
+# preserve the Agent environment, or allow arbitrary users/commands.
+# sudo/launcher failures produce terminal.error via the existing Agent path;
+# a failure after sudo starts may follow terminal.opened, then terminal.exited.
+#
+# The empty argument string is significant: the launcher accepts NO arguments.
+# NOSETENV prevents command-line environment overrides. Do not use NOEXEC: Bash
+# must be able to run interactive applications as edgeops.
+kickpi ALL=(edgeops) NOPASSWD: NOSETENV: /usr/local/libexec/firmware-terminal-shell ""

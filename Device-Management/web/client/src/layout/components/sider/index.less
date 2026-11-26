@@ -1,0 +1,231 @@
+// Ant Design Sider 样式优化
+.ant-layout-sider {
+    &.ant-layout-sider-dark {
+        background: #101531 !important;
+        
+        .ant-layout-sider-trigger {
+            background: #1D2343;
+            color: #F2F3F5;
+            border-top: 1px solid #2A3A5C;
+            
+            &:hover {
+                background: #2A3A5C;
+            }
+        }
+    }
+}
+
+#page-slider {
+    // Menu 基础样式
+    .ant-menu {
+        background: #101531 !important;
+        border-right: none !important;
+        
+        &.ant-menu-inline-collapsed {
+            width: 100% !important;
+        }
+    }
+    
+    // Menu 项目样式
+     .ant-menu-item {
+         font-family: YouSheBiaoTiHei;
+         font-size: 14px;
+         letter-spacing: 1px;
+         font-weight: 400;
+         color: #F2F3F5 !important;
+         margin: 4px 8px !important;
+         border-radius: 6px;
+         height: 40px;
+         line-height: 40px;
+         display: flex;
+         align-items: center;
+         
+         &:hover {
+             background: rgba(0, 90, 189, 0.3) !important;
+             color: #F2F3F5 !important;
+         }
+         
+         &.ant-menu-item-selected {
+             background: rgba(0, 90, 189, 0.6) !important;
+             color: #FFFFFF !important;
+             
+             &::after {
+                 display: none;
+             }
+         }
+         
+         .ant-menu-item-icon {
+             color: #F2F3F5 !important;
+             font-size: 16px;
+             margin-right: 8px;
+             flex-shrink: 0;
+         }
+         
+         .ant-menu-title-content {
+             flex: 1;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             white-space: nowrap;
+         }
+     }
+    
+    // SubMenu 样式
+     .ant-menu-submenu {
+         .ant-menu-submenu-title {
+             font-family: YouSheBiaoTiHei;
+             font-size: 20px;
+             letter-spacing: 2px;
+             font-weight: 400;
+             color: #F2F3F5 !important;
+             margin: 4px 8px !important;
+             border-radius: 6px;
+             height: 44px;
+             line-height: 44px;
+             display: flex;
+             align-items: center;
+             
+             &:hover {
+                 background: rgba(0, 90, 189, 0.3) !important;
+                 color: #F2F3F5 !important;
+             }
+             
+             .ant-menu-submenu-arrow {
+                 color: #F2F3F5 !important;
+                 margin-left: auto;
+             }
+             
+             .ant-menu-item-icon {
+                 color: #F2F3F5 !important;
+                 font-size: 18px;
+                 margin-right: 8px;
+                 flex-shrink: 0;
+             }
+             
+             .ant-menu-title-content {
+                 flex: 1;
+                 overflow: hidden;
+                 text-overflow: ellipsis;
+                 white-space: nowrap;
+             }
+         }
+        
+        &.ant-menu-submenu-selected {
+            .ant-menu-submenu-title {
+                // background: #1D2343 !important;
+                color: #0F7EFB !important;
+                
+                .ant-menu-item-icon {
+                    color: #0F7EFB !important;
+                }
+            }
+        }
+        
+        .ant-menu-sub {
+            background: #0F1A2E !important;
+            
+            .ant-menu-item {
+                font-size: 16px;
+                padding-left: 48px !important;
+                
+                &.ant-menu-item-selected {
+                    background: rgba(0, 90, 189, 0.5) !important;
+                    color: #F2F3F5 !important;
+                }
+            }
+        }
+    }
+    
+    // 折叠状态样式优化
+     .ant-menu-inline-collapsed {
+         width: 100% !important;
+         
+         .ant-menu-item {
+             padding: 0 !important;
+             text-align: center;
+             height: 48px;
+             line-height: 48px;
+             margin: 4px 8px !important;
+             
+             .ant-menu-item-icon {
+                 font-size: 18px;
+                 margin: 0 !important;
+                 vertical-align: middle;
+             }
+             
+             // 隐藏文字，只显示图标
+             .ant-menu-title-content {
+                 display: none !important;
+             }
+             
+             // 悬停时显示 Tooltip
+             &:hover {
+                 .ant-menu-title-content {
+                     display: none !important;
+                 }
+             }
+         }
+         
+         .ant-menu-submenu {
+             .ant-menu-submenu-title {
+                 padding: 0 0 0 20px !important;
+                 text-align: center;
+                 height: 48px;
+                 line-height: 48px;
+                 margin: 4px 8px !important;
+                 
+                 .ant-menu-item-icon {
+                     font-size: 18px;
+                     margin: 0 !important;
+                     vertical-align: middle;
+                 }
+                 
+                 // 隐藏文字和箭头
+                 .ant-menu-title-content {
+                     display: none !important;
+                 }
+                 
+                 .ant-menu-submenu-arrow {
+                     display: none !important;
+                 }
+             }
+         }
+         
+         // 折叠状态下的子菜单处理
+         .ant-menu-submenu-popup {
+             .ant-menu-item {
+                 padding-left: 24px !important;
+                 text-align: left;
+                 
+                 .ant-menu-title-content {
+                     display: inline !important;
+                 }
+             }
+         }
+     }
+    
+    // 智能滚动条 - 只在内容溢出时显示
+       overflow-y: auto;
+       overflow-x: hidden;
+       
+       // 自定义滚动条样式
+       &::-webkit-scrollbar {
+           width: 6px;
+       }
+       
+       &::-webkit-scrollbar-track {
+           background: transparent;
+       }
+       
+       &::-webkit-scrollbar-thumb {
+           background: rgba(255, 255, 255, 0.2);
+           border-radius: 3px;
+           
+           &:hover {
+               background: rgba(255, 255, 255, 0.4);
+           }
+       }
+       
+       // Firefox 滚动条样式
+       scrollbar-width: thin;
+       scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}

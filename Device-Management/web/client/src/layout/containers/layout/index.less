@@ -1,0 +1,156 @@
+// 主布局样式优化
+.layout-container {
+  height: 100vh;
+  overflow: hidden;
+  
+  // Header 样式
+  .ant-layout-header {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    z-index: 10;
+    position: relative;
+    padding: 0;
+    height: 50px;
+    line-height: 50px;
+  }
+  
+  // 主内容区域
+  .ant-layout {
+    background: #f0f2f5;
+    
+    // 内容区域
+    .ant-layout-content {
+      position: relative;
+      overflow: hidden;
+      
+      // 内容包装器
+      #page-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        
+        // 主内容区
+        > div:first-child {
+          flex: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          
+          // 自定义滚动条
+          &::-webkit-scrollbar {
+            width: 8px;
+          }
+          
+          &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          
+          &::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+            
+            &:hover {
+              background: #a8a8a8;
+            }
+          }
+        }
+        
+        // Footer 区域
+        .ant-layout-footer {
+          background: #fff;
+          border-top: 1px solid #e8e8e8;
+          padding: 12px 24px;
+          text-align: center;
+          color: #666;
+          font-size: 12px;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+}
+
+// 响应式布局
+@media (max-width: 768px) {
+  .layout-container {
+    .ant-layout-content {
+      #page-content {
+        > div:first-child {
+          padding: 16px !important;
+        }
+      }
+    }
+  }
+}
+
+// 页面内容区域样式
+.page-content-wrapper {
+  background: transparent;
+  border-radius: 8px;
+  
+  // 卡片容器
+  .content-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 24px;
+    overflow: hidden;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// 面包屑导航样式
+.breadcrumb-wrapper {
+  background: #fff;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 24px;
+  
+  .ant-breadcrumb {
+    font-size: 14px;
+    
+    .ant-breadcrumb-link {
+      color: #666;
+      
+      &:hover {
+        color: #1890ff;
+      }
+    }
+    
+    .ant-breadcrumb-separator {
+      color: #ccc;
+    }
+  }
+}
+
+// 加载状态样式
+.loading-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  
+  .ant-spin {
+    .ant-spin-text {
+      color: #666;
+      margin-top: 8px;
+    }
+  }
+}
+
+// 空状态样式
+.empty-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  
+  .ant-empty {
+    .ant-empty-description {
+      color: #999;
+    }
+  }
+}

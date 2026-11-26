@@ -1,0 +1,162 @@
+#top-slider {
+   // Ant Design Menu 样式优化
+   .ant-menu {
+      background: transparent !important;
+      border-bottom: none !important;
+      
+      &.ant-menu-horizontal {
+         line-height: 48px;
+         
+         .ant-menu-item {
+            color: #F2F3F5 !important;
+            font-size: 13px;
+            border-bottom: none !important;
+            margin: 0 8px;
+            
+            &:hover {
+               color: #ffffff !important;
+               background: rgba(255, 255, 255, 0.1) !important;
+            }
+            
+            &.ant-menu-item-selected {
+               color: #ffffff !important;
+               background: rgba(255, 255, 255, 0.15) !important;
+               
+               &::after {
+                  display: none;
+               }
+            }
+         }
+         
+         .ant-menu-submenu {
+            color: #F2F3F5 !important;
+            
+            .ant-menu-submenu-title {
+               color: #F2F3F5 !important;
+               font-size: 13px;
+               
+               &:hover {
+                  color: #ffffff !important;
+                  background: rgba(255, 255, 255, 0.1) !important;
+               }
+            }
+            
+            &.ant-menu-submenu-selected {
+               .ant-menu-submenu-title {
+                  color: #ffffff !important;
+                  background: rgba(255, 255, 255, 0.15) !important;
+               }
+            }
+         }
+      }
+   }
+   
+   // 右侧菜单对齐
+    .ant-menu-horizontal {
+       display: flex;
+       justify-content: flex-end;
+       
+       .ant-menu-overflow {
+          display: flex;
+          justify-content: flex-end;
+       }
+    }
+    
+    // 用户菜单触发器样式
+     .user-menu-trigger {
+        &:hover {
+           background: rgba(255, 255, 255, 0.1) !important;
+        }
+     }
+     
+     // 用户Popover菜单样式优化
+        .user-menu-popover {
+           .ant-popover-content {
+              padding: 0;
+           }
+           
+           .ant-popover-inner {
+              border-radius: 12px;
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+              padding: 0;
+              border: 1px solid rgba(0, 0, 0, 0.06);
+              background: #ffffff;
+              overflow: hidden;
+           }
+           
+           // 用户菜单项悬停效果
+           .user-menu-item {
+              &:hover {
+                 background: #f8fafc !important;
+                 
+                 span {
+                    color: #1e40af !important;
+                 }
+              }
+           }
+           
+           // 退出按钮悬停效果
+           .logout-button {
+              &:hover {
+                 background: #fee2e2 !important;
+                 border-color: #fca5a5 !important;
+                 color: #dc2626 !important;
+                 transform: translateY(-1px);
+                 box-shadow: 0 4px 8px rgba(239, 68, 68, 0.15);
+              }
+           }
+        }
+ }
+
+.customGroupPop {
+   .customGroupItem {
+      position: relative;
+
+      .edit-icon,
+      .del-icon {
+         display: none;
+         cursor: pointer;
+      }
+
+      .del-icon {
+         color: red;
+      }
+
+      &:hover .edit-icon,
+      &:hover .del-icon {
+         display: inline-block;
+         opacity: 1;
+      }
+
+      &:hover .edit-icon {
+         animation: fadeIn 0.3s ease-in-out;
+      }
+
+      &:hover .del-icon {
+         animation: slideIn 0.3s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+         from {
+            opacity: 0;
+         }
+
+         to {
+            display: inline-block;
+            opacity: 1;
+         }
+      }
+
+      @keyframes slideIn {
+         from {
+            transform: translateX(-10px);
+            opacity: 0;
+         }
+
+         to {
+            transform: translateX(0);
+            opacity: 1;
+         }
+      }
+   }
+}

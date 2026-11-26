@@ -1,0 +1,41 @@
+podTemplate {
+    node('pod-templ-jenkins-slave-common') {
+        env.IMAGE_NAME = "${IOT_IMAGES_REGISTRY}/${IOT}/${JOB_NAME}"
+        env.IMAGE_NAME_SHORT = "${IOT}/${JOB_NAME}"
+        env.SVN_Add = "${SVN_ADDRESS}/FS-DeviceManagementPlatform/trunk/web"
+        env.NODE_BASE_IMAGE = env.NODE_BASE_IMAGE?.trim() ?: 'repository.anxinyun.cn/base-images/nodejs12:20.10.12.2'
+        env.NODE_BUILD_IMAGE = env.NODE_BUILD_IMAGE?.trim() ?: 'docker.m.daocloud.io/library/node:22-bookworm-slim'
+        env.NPM_REGISTRY = env.NPM_REGISTRY?.trim() ?: 'https://nexus.ngaiot.com/repository/fs-npm/'
+        env.WEB_BUILD_MEMORY_MB = env.WEB_BUILD_MEMORY_MB?.trim() ?: '8192'
+
+        stage('Checkout') {
+            deleteDir()
+            checkout([$class: 'SubversionSCM', filterChangelog: false, locations: [[cancelProcessOnExternalsFail: true, credentialsId: 'svn-build', depthOption: 'infinity', ignoreExternalsOption: true, local: '.', remote: "${SVN_Add}"]], quietOperation: true, workspaceUpdater: [$class: 'CheckoutUpdater']])
+            env.BUILD_SVN_REVISION = env.SVN_REVISION ?: env.SVN_REVISION_1 ?: ''
+            env.BUILD_SVN_URL = env.SVN_Add
+        }
+        stage('Build React Web image') {
+            container('image-builder') {
+                sh '''
+                    set -eu
+                    test -f package-lock.json
+                    test -f build/peace-antd-compat.js
+                    case "$WEB_BUILD_MEMORY_MB" in ''|*[!0-9]*) echo "WEB_BUILD_MEMORY_MB must be a positive integer" >&2; exit 1;; esac
+                    test "$WEB_BUILD_MEMORY_MB" -gt 0
+                    /kaniko/executor --context="dir://$PWD" --dockerfile="$PWD/Dockerfile" \
+                        --build-arg="NODE_BASE_IMAGE=$NODE_BASE_IMAGE" \
+                        --build-arg="NODE_BUILD_IMAGE=$NODE_BUILD_IMAGE" \
+                        --build-arg="NPM_REGISTRY=$NPM_REGISTRY" \
+                        --build-arg="WEB_BUILD_MEMORY_MB=$WEB_BUILD_MEMORY_MB" \
+                        --build-arg="BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-}" \
+                        --build-arg="BUILD_NUMBER=$BUILD_NUMBER" \
+                        --build-arg="SVN_REVISION=$BUILD_SVN_REVISION" \
+                        --build-arg="SVN_URL=$BUILD_SVN_URL" \
+                        --destination="$IMAGE_NAME:$IMAGE_VERSION" --cache=false --cleanup
+                '''
+            }
+            buildName "${IMAGE_NAME_SHORT}:${IMAGE_VERSION}"
+            buildDescription "${IMAGE_NAME}:${IMAGE_VERSION}"
+        }
+    }
+}

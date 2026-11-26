@@ -1,0 +1,25 @@
+[Unit]
+Description=RK3576 local Detector
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=kickpi
+Group=kickpi
+WorkingDirectory=/home/kickpi/testAgent
+Environment=PYTHONUNBUFFERED=1
+Environment=DEVICE_ID=replace-with-agent-device-id
+Environment=DETECTOR_HOST=127.0.0.1
+Environment=DETECTOR_REQUIRE_RKNN=1
+Environment=DETECTOR_DATA_DIR=/home/kickpi/testAgent/detector-data
+Environment=AGENT_WORK_DIR=/home/kickpi/testAgent
+Environment=AGENT_CONFIG_PATH=/home/kickpi/testAgent/configs/agent.example.json
+ExecStart=/home/kickpi/miniconda3/envs/rknn/bin/python /home/kickpi/testAgent/detector/detector.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

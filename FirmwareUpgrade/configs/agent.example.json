@@ -1,0 +1,27 @@
+{
+  "server_url": "http://127.0.0.1:4700",
+  "device_name": "demo-device-01",
+  "device_interface": "",
+  "state_file": "./agent-state.json",
+  "database_file": "./db/agent.db",
+  "allowed_target_dir": "./received-firmware",
+  "heartbeat_interval_seconds": 60,
+  "websocket_reconnect_max_seconds": 60,
+  "file_download_timeout_seconds": 1800,
+  "detector_ws_url": "ws://127.0.0.1:8090",
+  "setup_listen": "127.0.0.1:8085",
+  "setup_token": "",
+  "terminal": {
+    "enabled": true,
+    "shells": [
+      "powershell.exe",
+      "/bin/bash"
+    ],
+    "max_sessions": 2
+  },
+  "sku": "RK3576",
+  "runtime_version": "1.0.0",
+  "model_version": "1.0.0",
+  "address": "请填写设备实际安装地址",
+  "allow_remote_reboot": false
+}

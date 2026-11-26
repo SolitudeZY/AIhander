@@ -1,0 +1,254 @@
+.area-card {
+    width: 525px;
+    height: 314px;
+    background: #FFFEFC;
+    border: 1px solid #dcdee033;
+    box-shadow: 0 2px 12px 1px #F2F3F5;
+    margin: 10px 10px 10px 20px;
+
+    .area-card-content {
+        .area-card-content-item {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+
+            .point {
+                display: inline-block;
+                border-radius: 50%;
+                width: 9px;
+                height: 9px;
+                margin: 0 10px;
+            }
+
+            .point1 {
+                // 离线数
+                background: #C3C3C3;
+            }
+
+            .point2 {
+                //强预警
+                background: #FF9496;
+            }
+
+            .point3 {
+                //电量充足数
+                background: #82EB7B;
+            }
+
+            .point4 {
+                //弱预警
+                background: #FDAD31;
+            }
+
+            .point5 {
+                //需充电
+                background: #E5E465;
+            }
+
+            .tooltip {
+                width: 36px;
+                height: 17px;
+                font-family: SourceHanSansCN-Regular;
+                font-weight: 400;
+                font-size: 12px;
+                color: #000000;
+            }
+        }
+
+        .num {
+            width: 485px;
+            height: 14px;
+            // background: #2EB171;
+            border-radius: 7px;
+            margin: 10px 20px;
+            position: relative;
+
+            .progress {
+                .total1 {
+                    //电量充足数
+                    background: #82EB7B;
+                    border-radius: 7px 0 0 7px;
+                }
+
+                .total2 {
+                    //强预警
+                    background: #FF9496;
+                }
+
+                .total3 {
+                    //离线数
+                    background: #C3C3C3;
+                    border-radius: 0 7px 7px 0;
+                }
+
+                .total4 {
+                    //弱预警
+                    background: #FDAD31;
+                }
+
+                .total5 {
+                    //需充电
+                    background: #E5E465;
+                }
+            }
+
+            .progress>span {
+                display: inline-block;
+                height: 14px;
+            }
+
+            .area-card-content-item-number {
+                position: absolute;
+                top: 14px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 40px;
+            }
+
+            .area-card-content-item-number>div {
+                width: 8px;
+                height: 8px;
+                border-top: 4px solid transparent;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+            }
+
+            .normal>div {
+                border-bottom: 4px solid #2EB171;
+            }
+
+            .soft-warning>div {
+                border-bottom: 4px solid #307EFB;
+            }
+
+            .serious-warning>div {
+                border-bottom: 4px solid #FE9812;
+            }
+
+            .offline>div {
+                border-bottom: 4px solid #FF6F42;
+            }
+
+            .area-card-content-item-number>span {
+                font-family: SourceHanSansCN-Medium;
+                font-weight: 500;
+                font-size: 12px;
+                letter-spacing: 0;
+            }
+
+            .normal>span {
+                color: #2EB171;
+            }
+
+            .serious-warning>span {
+                color: #FE9812;
+            }
+
+            .soft-warning>span {
+                color: #307EFB;
+
+            }
+
+            .offline>span {
+                color: #FF6F42
+            }
+        }
+
+        .future7Days {
+            font-family: SourceHanSansCN-Medium;
+            font-weight: 500;
+            font-size: 16px;
+            color: #4A4A4A;
+            letter-spacing: 0;
+            padding: 20px 20px;
+
+        }
+
+        .future7Days-content {
+            display: flex;
+
+            .day {
+                font-family: SourceHanSansCN-Medium;
+                font-weight: 500;
+                font-size: 14px;
+                color: #4A4A4A;
+                letter-spacing: 0;
+                text-align: center;
+
+            }
+
+            .weather {
+                font-family: SourceHanSansCN-Regular;
+                font-weight: 400;
+                font-size: 12px;
+                color: #000000e6;
+                letter-spacing: 0;
+                text-align: center;
+
+            }
+
+            .wind {
+                font-family: SourceHanSansCN-Regular;
+                font-weight: 400;
+                font-size: 10px;
+                color: #000000bf;
+                letter-spacing: 0;
+                text-align: center;
+
+            }
+
+            .precip {
+                font-family: SourceHanSansCN-Regular;
+                font-weight: 400;
+                font-size: 10px;
+                color: #000000bf;
+                letter-spacing: 0;
+                text-align: center;
+            }
+        }
+    }
+}
+
+.area-container {
+    position: relative;
+    height: 680px;
+}
+
+.area-card-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+
+    .city {
+        width: 48px;
+        height: 22px;
+        font-family: SourceHanSansCN-Medium;
+        font-weight: 500;
+        font-size: 16px;
+        color: #000000cc;
+        letter-spacing: 0;
+        margin-left: 3px;
+    }
+
+    .city-icon {
+        display: flex;
+        justify-content: center;
+    }
+
+    .ai-advice {
+        width: 102px;
+        height: 20px;
+        font-family: SourceHanSansCN-Regular;
+        font-weight: 400;
+        font-size: 14px;
+        color: gray;
+        letter-spacing: 0;
+
+    }
+
+    .ai-advice:hover {
+        cursor: pointer;
+    }
+}

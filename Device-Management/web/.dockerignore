@@ -1,0 +1,16 @@
+.svn
+**/.svn
+node_modules
+.vscode
+.env
+.env.*
+*.env
+log
+logs
+*.log
+*.log.*
+client/build
+coverage
+test
+jenkinsfile
+*.bak

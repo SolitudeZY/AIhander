@@ -1,0 +1,1 @@
+INSERT INTO "public"."resource" ("code", "name", "parent_resource") VALUES ('PARAMETERTEMPLATEHISTORY', '参数模板历史记录', 'DEVICE');

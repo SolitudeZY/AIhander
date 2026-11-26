@@ -1,0 +1,56 @@
+.role-tree {
+    .icon .tips {
+        margin-left       : 10px;
+        -webkit-transition: opacity 0.1s 0.2s;
+        opacity           : 0;
+        pointer-events    : none;
+    }
+
+    .icon:hover .tips {
+        -webkit-transition: opacity 0.2s;
+        opacity           : 1;
+        pointer-events    : auto;
+    }
+
+    .icon .tips:hover {
+        -webkit-transition: none;
+    }
+}
+
+.role-user-table {
+    .ant-card-body {
+        padding: 0;
+    }
+
+    .ant-pro-table-list-toolbar {
+        padding: 0 0 12px;
+    }
+}
+
+.role-detail-container {
+    height: 100%;
+    overflow: hidden;
+
+    > .ant-pro-card-body {
+        height: 100%;
+        padding: 0;
+    }
+
+    #role-right-card {
+        padding: 0 8px 20px 16px;
+        overflow-y: auto;
+    }
+
+    .role-permission-panel {
+        // margin-top: 20px;
+        // padding-top: 18px;
+        // border-top: 1px solid #f0f0f0;
+    }
+
+    .role-permission-title {
+        margin-bottom: 4px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f1f1f;
+    }
+}

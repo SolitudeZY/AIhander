@@ -1,0 +1,37 @@
+"use strict";
+
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const http = require("node:http");
+const { once } = require("node:events");
+const { listEvents } = require("../app/lib/controllers/firmwareUpgrade/edge-cloud");
+
+test("events forwards exception filters and preserves complete lifecycle details", async (t) => {
+  const query = { category: "exceptions", device_id: "device-1", type: "auto_recover", status: "recovered", page: "2", page_size: "10" };
+  const record = {
+    id: 2, device_id: "device-1", channel_id: "CH-1", record_type: "recovery", type: "auto_recover",
+    target: "CH-1", reason: "视频流断开", started_at: "2026-09-24T00:00:00Z", ended_at: "2026-09-24T00:00:00Z",
+    duration_seconds: 0, status: "recovered", result: "passed", triggered_at: "2026-09-24T00:00:00Z",
+    trigger_reason: "视频流断开", action: "reconnect_channel", before_state: "offline",
+    after_self_check: "视频流正常，画面质量检测通过", rebooted: false, related_id: 1,
+  };
+  const page = { items: [record], total: 11, page: 2, page_size: 10, has_more: false };
+  let actual;
+  const cloud = http.createServer((req, res) => {
+    actual = new URL(req.url, "http://localhost");
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(page));
+  });
+  cloud.listen(0, "127.0.0.1");
+  await once(cloud, "listening");
+  t.after(() => new Promise(resolve => cloud.close(resolve)));
+  const root = `http://127.0.0.1:${cloud.address().port}`;
+  const ctx = { query, path: "/edgeCloud/events", fs: { logger: { error() {} } }, app: { fs: { edgeCloudRequest: {
+    root,
+  } } } };
+  await listEvents(ctx);
+  assert.equal(ctx.status, 200);
+  assert.equal(actual.pathname, "/api/v1/alarms");
+  assert.deepEqual(Object.fromEntries(actual.searchParams), query);
+  assert.deepEqual(ctx.body, page);
+});

@@ -1,0 +1,37 @@
+# Merge these rules into the existing dvcplttest Ingress after replacing values.
+# The API Service MUST be the device backend currently reached by Web /_api.
+# /api/root currently reports another POMS service; do not use that as a target.
+# Never apply this template unchanged or replace existing React routes.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: node-agent-test-example
+  namespace: REPLACE_WITH_DEVICE_PLATFORM_NAMESPACE
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "520m"
+spec:
+  ingressClassName: nginx # Adapt to installed controller.
+  tls:
+    - hosts: [dvcplttest.anxinyun.cn]
+      secretName: REPLACE_WITH_EXISTING_TLS_SECRET
+  rules:
+    - host: dvcplttest.anxinyun.cn
+      http:
+        paths:
+          # Preserve original paths, with no rewrite-target.
+          - path: /api/v1/agents
+            pathType: Prefix
+            backend:
+              service:
+                name: REPLACE_WITH_DEVICE_NODE_API_SERVICE
+                port:
+                  number: 4700 # Replace with actual Kubernetes Service port.
+          - path: /terminal/connect
+            pathType: Exact
+            backend:
+              service:
+                name: REPLACE_WITH_DEVICE_NODE_API_SERVICE
+                port:
+                  number: 4700

@@ -1,0 +1,109 @@
+package main
+
+import (
+	"encoding/json"
+	"net/url"
+	"strings"
+	"testing"
+
+	"firmwareupgrade/internal/protocol"
+)
+
+func seedEventRecords(t *testing.T, a *app) {
+	t.Helper()
+	seedRequirementsDevice(t, a)
+	_, err := registerDevice(a.db, protocol.RegisterRequest{DeviceID: "device-2", Name: "second"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, record := range []struct {
+		device            string
+		row               int64
+		channel, kind, at string
+		confidence        float64
+	}{
+		{"device-1", 1, "CH-1", "landslide", "2026-09-21T10:00:00+08:00", .95},
+		{"device-1", 2, "CH-1", "landslide", "2026-09-21T02:01:00Z", .8},
+		{"device-2", 1, "CH-2", "rockfall", "2026-09-21T02:02:00Z", .9},
+	} {
+		report := protocol.AlarmReport{Alarms: []protocol.AlarmRecord{{RowID: record.row, ChannelID: record.channel, ModelVersion: "landslide_yolov8n.rknn", DetectionType: record.kind, AlarmTime: record.at, Confidence: record.confidence}}}
+		if result := a.recordAlarmReport(record.device, report); !result.Operate {
+			t.Fatal(result)
+		}
+		if result := a.recordAlarmReport(record.device, report); !result.Operate {
+			t.Fatal("duplicate report", result)
+		}
+	}
+}
+
+func TestDetectionPageFiltersDetailsAndStatistics(t *testing.T) {
+	a := requirementsApp(t)
+	seedEventRecords(t, a)
+	for _, prefix := range []string{"/api/v1/events", "/api/v1/alarms"} {
+		var first struct {
+			Items   []cloudAlarmItem `json:"items"`
+			Total   int              `json:"total"`
+			HasMore bool             `json:"has_more"`
+		}
+		response := callCloud(a, "GET", prefix+"?page=1&page_size=2", "", "")
+		if response.Code != 200 || json.Unmarshal(response.Body.Bytes(), &first) != nil || first.Total != 3 || len(first.Items) != 2 || !first.HasMore || first.Items[0].DeviceID != "device-2" || first.Items[1].AgentRowID != 2 {
+			t.Fatal(response.Code, response.Body.String())
+		}
+		if first.Items[0].ModelVersion != "landslide_yolov8n.rknn" || first.Items[0].ValidationID != "device-2:1" || first.Items[0].UploadStatus != "not_uploaded" || len(first.Items[0].Timeline) != 3 {
+			t.Fatalf("event metadata = %#v", first.Items[0])
+		}
+		response = callCloud(a, "GET", prefix+"?page=2&page_size=2", "", "")
+		json.Unmarshal(response.Body.Bytes(), &first)
+		if first.HasMore || len(first.Items) != 1 || first.Items[0].AgentRowID != 1 || first.Items[0].DeviceID != "device-1" {
+			t.Fatal(response.Body.String())
+		}
+		q := url.Values{"page": {"1"}, "device_id": {"device-1"}, "channel_id": {"CH-1"}, "detection_type": {"landslide"}, "start_time": {"2026-09-21T10:00:00+08:00"}, "end_time": {"2026-09-21T10:00:00+08:00"}, "min_confidence": {"0.9"}}
+		response = callCloud(a, "GET", prefix+"?"+q.Encode(), "", "")
+		json.Unmarshal(response.Body.Bytes(), &first)
+		if response.Code != 200 || first.Total != 1 || first.Items[0].AgentRowID != 1 {
+			t.Fatal(response.Code, response.Body.String())
+		}
+		detail := callCloud(a, "GET", prefix+"/device-2/1", "", "")
+		var item cloudAlarmItem
+		json.Unmarshal(detail.Body.Bytes(), &item)
+		if detail.Code != 200 || item.DetectionType != "rockfall" {
+			t.Fatal(detail.Body.String())
+		}
+		if got := callCloud(a, "GET", prefix+"/device-1/999", "", ""); got.Code != 404 {
+			t.Fatal(got.Code)
+		}
+		stats := callCloud(a, "GET", prefix+"/statistics?device_id=device-1", "", "")
+		var summary map[string]any
+		json.Unmarshal(stats.Body.Bytes(), &summary)
+		if stats.Code != 200 || summary["total"] != float64(2) || summary["device_count"] != float64(1) || !strings.HasPrefix(summary["first_alarm_time"].(string), "2026-09-21T02:00:00") {
+			t.Fatal(stats.Code, stats.Body.String())
+		}
+	}
+	// Old dashboard still consumes a bare array.
+	legacy := callCloud(a, "GET", "/api/v1/alarms?limit=1", "", "")
+	var old []cloudAlarmItem
+	if json.Unmarshal(legacy.Body.Bytes(), &old) != nil || len(old) != 1 {
+		t.Fatal(legacy.Body.String())
+	}
+	if got := callCloud(a, "GET", "/api/v1/events", "", ""); got.Code != 200 {
+		t.Fatal(got.Code)
+	}
+}
+
+func TestDetectionQueryValidationAndEmptyPage(t *testing.T) {
+	a := requirementsApp(t)
+	for _, q := range []string{"page=0", "page_size=201", "page=not-number", "start_time=2026-09-21", "start_time=2026-09-22T00:00:00Z&end_time=2026-09-21T00:00:00Z", "min_confidence=NaN", "min_confidence=2"} {
+		if got := callCloud(a, "GET", "/api/v1/events?"+q, "", ""); got.Code != 400 {
+			t.Fatal(q, got.Code)
+		}
+	}
+	empty := callCloud(a, "GET", "/api/v1/events?page=3", "", "")
+	if empty.Code != 200 || !strings.Contains(empty.Body.String(), `"items":[]`) || !strings.Contains(empty.Body.String(), `"total":0`) {
+		t.Fatal(empty.Body.String())
+	}
+	seedRequirementsDevice(t, a)
+	bad := a.recordAlarmReport("device-1", protocol.AlarmReport{Alarms: []protocol.AlarmRecord{{RowID: 1, ChannelID: "CH-1", DetectionType: "landslide", AlarmTime: "bad-time", Confidence: .8}}})
+	if bad.Operate {
+		t.Fatal("invalid timestamp was persisted")
+	}
+}

@@ -1,0 +1,119 @@
+package main
+
+import (
+	"encoding/json"
+	"net/http/httptest"
+	"strings"
+	"sync/atomic"
+	"testing"
+
+	"firmwareupgrade/internal/protocol"
+)
+
+func callReboot(a *app, key string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest("POST", "/api/v1/devices/device-1/reboot", strings.NewReader(`{"confirm":true}`))
+	req.Header.Set("Idempotency-Key", key)
+	out := httptest.NewRecorder()
+	a.routes().ServeHTTP(out, req)
+	return out
+}
+
+func TestDeviceRebootLifecycleAndIdempotency(t *testing.T) {
+	a := requirementsApp(t)
+	var executions atomic.Int32
+	mockRequirementsAgent(t, a, func(msg protocol.Message) protocol.Message {
+		if msg.Type != "deviceReboot" {
+			return protocol.New("unexpected", nil)
+		}
+		executions.Add(1)
+		var request protocol.DeviceRebootRequest
+		decodeData(msg.Data, &request)
+		return protocol.New("deviceRebootResult", protocol.DeviceRebootResult{OperationID: request.OperationID, Status: "accepted", BootID: "boot-before"})
+	})
+	first := callReboot(a, "reboot-request-1")
+	var operation deviceOperation
+	json.Unmarshal(first.Body.Bytes(), &operation)
+	if first.Code != 202 || operation.Status != "accepted" || operation.ID == "" {
+		t.Fatal(first.Code, first.Body.String())
+	}
+	again := callReboot(a, "reboot-request-1")
+	var replay deviceOperation
+	json.Unmarshal(again.Body.Bytes(), &replay)
+	if again.Code != 200 || operation.ID != replay.ID || executions.Load() != 1 {
+		t.Fatal(again.Code, again.Body.String(), executions.Load())
+	}
+	if blocked := callReboot(a, "different-request-2"); blocked.Code != 409 {
+		t.Fatal(blocked.Code, blocked.Body.String())
+	}
+	if err := a.recordHeartbeat("device-1", protocol.Heartbeat{BootID: "boot-before"}); err != nil {
+		t.Fatal(err)
+	}
+	path := "/api/v1/devices/device-1/operations/" + operation.ID
+	got := callCloud(a, "GET", path, "", "")
+	json.Unmarshal(got.Body.Bytes(), &operation)
+	if operation.Status != "accepted" {
+		t.Fatal("same boot/reconnect must not count as successful reboot", got.Body.String())
+	}
+	if err := a.recordHeartbeat("device-1", protocol.Heartbeat{BootID: "boot-after"}); err != nil {
+		t.Fatal(err)
+	}
+	got = callCloud(a, "GET", path, "", "")
+	json.Unmarshal(got.Body.Bytes(), &operation)
+	if got.Code != 200 || operation.Status != "succeeded" {
+		t.Fatal(got.Code, got.Body.String())
+	}
+	if wrong := callCloud(a, "GET", strings.Replace(path, "device-1", "device-2", 1), "", ""); wrong.Code != 404 {
+		t.Fatal(wrong.Code)
+	}
+	if err := a.recordRebootResult("device-1", protocol.DeviceRebootResult{OperationID: operation.ID, Status: "accepted", BootID: "boot-before"}); err != nil {
+		t.Fatal(err)
+	}
+	got = callCloud(a, "GET", path, "", "")
+	if !strings.Contains(got.Body.String(), `"status":"succeeded"`) {
+		t.Fatal("late acknowledgement regressed final state")
+	}
+}
+
+func TestDeviceRebootValidationAndOffline(t *testing.T) {
+	a := requirementsApp(t)
+	seedRequirementsDevice(t, a)
+	if got := callReboot(a, ""); got.Code != 400 {
+		t.Fatal(got.Code)
+	}
+	if got := callCloud(a, "POST", "/api/v1/devices/device-1/reboot", "", `{"confirm":true,"command":"reboot"}`); got.Code != 400 {
+		t.Fatal(got.Code)
+	}
+	if got := callReboot(a, "reboot-request"); got.Code != 503 {
+		t.Fatal(got.Code)
+	}
+	var count int
+	a.db.QueryRow(`SELECT COUNT(*) FROM device_operations`).Scan(&count)
+	if count != 0 {
+		t.Fatal("offline reboot was queued")
+	}
+}
+
+func TestDeviceRebootRejectionAndUnknownReplay(t *testing.T) {
+	a := requirementsApp(t)
+	var operationID atomic.Value
+	mockRequirementsAgent(t, a, func(msg protocol.Message) protocol.Message {
+		var request protocol.DeviceRebootRequest
+		decodeData(msg.Data, &request)
+		operationID.Store(request.OperationID)
+		return protocol.New("deviceRebootResult", protocol.DeviceRebootResult{OperationID: request.OperationID, Status: "failed", ErrorCode: "disabled"})
+	})
+	response := callReboot(a, "reboot-disabled")
+	if response.Code != 403 || !strings.Contains(response.Body.String(), `"status":"failed"`) {
+		t.Fatal(response.Code, response.Body.String())
+	}
+	_, err := a.db.Exec(`UPDATE device_operations SET status='unknown',updated_at='2020-01-01T00:00:00Z' WHERE id=?`, operationID.Load())
+	if err != nil {
+		t.Fatal(err)
+	}
+	response = callReboot(a, "reboot-disabled")
+	var replay deviceOperation
+	json.Unmarshal(response.Body.Bytes(), &replay)
+	if response.Code != 403 || replay.ID != operationID.Load().(string) {
+		t.Fatal("recovery must resend original operation id", response.Code, response.Body.String())
+	}
+}

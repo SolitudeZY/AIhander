@@ -1,0 +1,297 @@
+// webpack （vite 用 alias 兼容了）
+// 已移除 Semi Design 样式导入
+@import '~antd/dist/reset.css';
+@import "~perfect-scrollbar/css/perfect-scrollbar.css";
+@import "~nprogress/nprogress.css";
+@import "~simplebar-react/dist/simplebar.min.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  :focus-visible {
+    outline: none;
+  }
+}
+
+.ps__rail-y,
+.ps__rail-x {
+  background: transparent !important;
+}
+#DmsApp{
+  .ant-popover-content {
+    min-width: 300px;
+  }
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+
+  #App {
+    height: 100%;
+  }
+
+  .ant-picker-time-panel {
+    //时间选择器不显示滚动栏
+    ::-webkit-scrollbar {
+      display: none;
+      /* Chrome Safari */
+    }
+
+    scrollbar-width: none;
+    /* firefox */
+    -ms-overflow-style: none;
+    /* IE 10+ */
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  a:link {
+    text-decoration: none;
+    color: unset;
+  }
+
+  a:visited {
+    text-decoration: none;
+    color: unset;
+  }
+
+  a:hover {
+    text-decoration: none;
+    color: unset;
+  }
+
+  a:active {
+    text-decoration: none;
+    color: unset;
+  }
+}
+
+// // Ant Design 全局样式
+// .ant-popover-content {
+//   min-width: 300px;
+// }
+
+.ant-modal-root {
+  position: fixed;
+}
+// 美化滚动条
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  width: 6px;
+  background: rgba(#101f1c, 0.1);
+  -webkit-border-radius: 1em;
+  -moz-border-radius: 1em;
+  border-radius: 1em;
+  /* 通过 margin 设置轨道与元素的距离 */
+  margin: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 147, 153, 0.5);
+  background-clip: padding-box;
+  min-height: 28px;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  border-radius: 2em;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(144, 147, 153, 0.3);
+}
+
+@font-face {
+  font-family: "YouSheBiaoTiHei"; //这个可以任意取，但是应与后面相对应eg：yxingguang
+  src: url("/assets/fonts/YouSheBiaoTiHei-2.ttf");
+}
+@font-face {
+  font-family: "DINExp"; //这个可以任意取，但是应与后面相对应eg：yxingguang
+  src: url("/assets/fonts/DINExp.ttf");
+}
+@font-face {
+  font-family: "SourceHanSansCN-Normal"; 
+  src: url("/assets/fonts/SourceHanSansCN-Normal.otf");
+}
+@font-face {
+  font-family: "SourceHanSansCN-Bold"; 
+  src: url("/assets/fonts/SourceHanSansCN-Bold.otf");
+}
+@font-face {
+  font-family: "SourceHanSansCN-ExtraLight"; 
+  src: url("/assets/fonts/SourceHanSansCN-ExtraLight.otf");
+}
+@font-face {
+  font-family: "SourceHanSansCN-Heavy"; 
+  src: url("/assets/fonts/SourceHanSansCN-Heavy.otf");
+}
+@font-face {
+  font-family: "SourceHanSansCN-Light"; 
+  src: url("/assets/fonts/SourceHanSansCN-Light.otf");
+}
+@font-face {
+  font-family: "SourceHanSansCN-Medium"; 
+  src: url("/assets/fonts/SourceHanSansCN-Medium.otf");
+}
+
+// 自定义表格样式 - 只显示水平边框线
+.horizontal-border-only {
+  .ant-table-thead > tr > th {
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+  }
+  
+  .ant-table-tbody > tr > td {
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+  }
+  
+  .ant-table-thead > tr:first-child > th:first-child {
+    border-left: none !important;
+  }
+  
+  .ant-table-thead > tr:first-child > th:last-child {
+    border-right: none !important;
+  }
+  
+  .ant-table-tbody > tr > td:first-child {
+    border-left: none !important;
+  }
+  
+  .ant-table-tbody > tr > td:last-child {
+    border-right: none !important;
+  }
+  
+  .ant-table-container {
+    border-left: none !important;
+    border-right: none !important;
+  }
+  
+  .ant-table-content {
+    border-left: none !important;
+    border-right: none !important;
+  }
+}
+
+// 传感器弹框自定义滚动条样式
+.sensor-modal-custom-scrollbar {
+  .ant-modal-body {
+    // Webkit 浏览器（Chrome, Safari, Edge）自定义滚动条
+    &::-webkit-scrollbar {
+      width: 2px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 1px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 1px;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background: #a8a8a8;
+      }
+      
+      &:active {
+        background: #999999;
+      }
+    }
+    
+    // Firefox 浏览器自定义滚动条
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+  }
+}
+
+// 用户管理弹框高层级样式 - 防止表头"状态"等文字穿透到弹框上
+.member-modal-high-z-index {
+  // 使用 1200，确保高于所有表格元素
+  z-index: 1200 !important;
+  
+  &.ant-modal-wrap {
+    z-index: 1200 !important;
+  }
+  
+  .ant-modal-mask {
+    z-index: 1199 !important;
+  }
+  
+  .ant-modal {
+    z-index: 1200 !important;
+  }
+  
+  .ant-modal-content {
+    position: relative;
+    z-index: 1200 !important;
+  }
+}
+
+// 用户管理页面表格容器 - 限制表头层级，避免盖住弹框
+.member-table-container {
+  // 创建新的层叠上下文，限制内部所有元素的 z-index 不能超出
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  
+  // 强制所有表格相关元素的 z-index 重置
+  * {
+    z-index: auto !important;
+  }
+  
+  // 表头需要 sticky，但 z-index 必须低
+  .ant-table-thead > tr > th {
+    position: sticky !important;
+    z-index: 2 !important;
+  }
+  
+  .ant-table-header {
+    z-index: 2 !important;
+  }
+  
+  .ant-table-sticky-holder {
+    z-index: 2 !important;
+  }
+  
+  .ant-table-cell-fix-left,
+  .ant-table-cell-fix-right {
+    z-index: 2 !important;
+  }
+  
+  // ProTable 特定元素
+  .ant-pro-table-list-toolbar {
+    z-index: 2 !important;
+  }
+  
+  .ant-table-wrapper {
+    z-index: auto !important;
+  }
+  
+  .ant-table-container {
+    z-index: auto !important;
+  }
+  
+  // 确保筛选下拉也在正确的层级
+  .ant-table-filter-dropdown {
+    z-index: 10 !important;
+  }
+}
+
+// 表格分页
+.ant-table-wrapper .ant-table-pagination.ant-pagination {
+  margin: 16px 0 0 0 !important;
+}

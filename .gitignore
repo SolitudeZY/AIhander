@@ -1,0 +1,68 @@
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+.venv*/
+.venv
+venv/
+env/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+
+# --- Go / native build outputs ---------------------------------------------
+bin/
+vendor/
+*.exe
+*.dll
+*.so
+*.dylib
+*.pyd
+*.a
+*.o
+*.test
+
+# --- Node / front-end -------------------------------------------------------
+node_modules/
+.npm/
+*.tsbuildinfo
+
+# --- Archives / logs / runtime state ---------------------------------------
+*.zip
+*.gz
+*.tgz
+*.7z
+*.rar
+*.log
+nohup.out
+agent-state.json
+*.db
+*.sqlite
+*.db-journal
+
+# --- Models & media (weights are delivered out-of-band) ---------------------
+*.rknn
+*.onnx
+*.pt
+*.pth
+*.mp4
+
+# --- Local configuration & credentials (never commit) ----------------------
+.env
+.env.*
+!.env.example
+agent-local.env
+*.pem
+*.key
+*.p12
+*.pfx
+.vscode/
+.idea/
+Device-Management/api/data/
+Device-Management/script/0.0.1/1.结构+数据.sql
+
+# --- OS noise ---------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini

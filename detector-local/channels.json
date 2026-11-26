@@ -1,0 +1,32 @@
+{
+  "camera-006": {
+    "channelId": "camera-006",
+    "name": "1假通道112",
+    "enabled": false,
+    "rtspUrl": "rtsp://192.168.1.11:554/ch11112",
+    "transport": "tcp",
+    "moduleName": "landslide-v2.rknn",
+    "revision": 3,
+    "isTest": false
+  },
+  "camera-023": {
+    "channelId": "camera-023",
+    "name": "channl",
+    "enabled": true,
+    "rtspUrl": "rtsp://REPLACE_WITH_CAMERA_USER:REPLACE_WITH_CAMERA_PASSWORD@10.8.30.44:554/Streaming/Channels/101",
+    "transport": "TCP",
+    "moduleName": "landslide-v2.rknn",
+    "revision": 1,
+    "isTest": false
+  },
+  "CH-BE5F54F4": {
+    "channelId": "CH-BE5F54F4",
+    "name": "test",
+    "enabled": true,
+    "rtspUrl": "rtsp://admin:admin@192.168.1.10/live0",
+    "transport": "tcp",
+    "moduleName": "landslide_yolov8n_seedance_hard_r2_20260827_int8_rk3576.rknn",
+    "revision": 1,
+    "isTest": false
+  }
+}

@@ -1,0 +1,4 @@
+numpy>=1.24,<2
+opencv-python-headless>=4.9,<5
+Pillow>=10,<12
+websockets>=14,<16

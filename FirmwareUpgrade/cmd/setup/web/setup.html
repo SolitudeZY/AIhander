@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>视觉边缘设备 setUp 管理平台</title>
+    <link rel="stylesheet" href="/static/xterm/xterm.css">
+    <link rel="stylesheet" href="/static/setup.css">
+    <link rel="stylesheet" href="/static/terminal.css">
+</head>
+<body>
+<div class="app-shell">
+    <header class="header">
+        <div class="brand"><span class="brand-icon">▣</span><div><h1>视觉边缘设备 setUp 管理平台</h1><p>Local Device Operations</p></div></div>
+        <div class="header-actions"><span id="updated">正在连接 Agent…</span><span class="connection-pill"><i id="dot"></i><span id="state">连接中</span></span><span class="avatar">本</span></div>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <nav>
+                <section class="nav-section">
+                    <h2>管理</h2>
+                    <button class="nav-item active" type="button" data-page="dashboard"><span>▦</span>仪表盘</button>
+                    <button class="nav-item" type="button" data-page="channels"><span>▣</span>视频通道</button>
+                    <button class="nav-item" type="button" data-page="alarms"><span>⚠</span>告警记录 <small id="alarmCount">0</small></button>
+                </section>
+                <section class="nav-section">
+                    <h2>操作</h2>
+                    <button class="nav-item" type="button" data-page="terminal"><span>⌨</span>本地终端</button>
+                </section>
+            </nav>
+        </aside>
+
+        <main class="content-area">
+            <section id="dashboard" class="view-content active">
+                <div class="page-heading"><div><h2>仪表盘</h2><p>当前终端 Agent 连接和资源运行状态</p></div><button class="btn secondary" id="dashboardRefresh" type="button">刷新数据</button></div>
+                <div class="stat-grid">
+                    <article class="stat-card purple"><span>Agent 状态</span><strong id="agent">离线</strong><small>本机 8085 WebSocket</small></article>
+                    <article class="stat-card blue"><span>CPU 使用率</span><strong id="cpu">—</strong><small>当前设备负载</small></article>
+                    <article class="stat-card green"><span>内存使用率</span><strong id="memory">—</strong><small>当前设备内存</small></article>
+                    <article class="stat-card orange"><span>磁盘使用率</span><strong id="disk">—</strong><small>Agent 目标磁盘</small></article>
+                </div>
+                <article class="panel">
+                    <div class="panel-header"><div><h3>本地管理链路</h3><p>setUp 独立运行，不经过远端 Cloud</p></div><span class="badge" id="agentBadge">Agent 离线</span></div>
+                    <div class="link-flow"><div><strong>浏览器</strong><small>管理页面</small></div><b>→</b><div><strong>setUp 服务</strong><small>HTTP :8086 / SQLite</small></div><b>→</b><div><strong>Agent</strong><small>WebSocket :8085</small></div><b>→</b><div><strong>Detector</strong><small>WebSocket :8090</small></div></div>
+                </article>
+                <article class="panel">
+                    <div class="panel-header"><div><h3>最近告警</h3><p>setUp 已持久化的最新检测事件</p></div><button class="btn secondary small" type="button" data-page-link="alarms">查看全部</button></div>
+                    <div class="table-wrap"><table class="alarm-table"><thead><tr><th>告警图片</th><th>告警时间</th><th>通道</th><th>事件类型</th><th>置信度</th></tr></thead><tbody id="dashboardAlarms"><tr><td colspan="5">正在加载告警…</td></tr></tbody></table></div>
+                </article>
+            </section>
+
+            <section id="channels" class="view-content">
+                <div class="page-heading"><div><h2>视频通道</h2><p>管理摄像机接入、模型配置与 Detector 实时检测画面</p></div><button id="add" class="btn primary" type="button">＋ 添加通道</button></div>
+                <article class="panel">
+                    <div class="panel-header"><div><h3>当前设备通道</h3><p>Agent SQLite 是通道配置的权威数据源</p></div><span id="channelSummary" class="muted">0 路通道</span></div>
+                    <div class="table-wrap channel-table-wrap"><table class="channel-table"><thead><tr><th>通道</th><th>视频状态</th><th>画面</th><th>模型文件</th><th>实时帧率</th><th>同步状态</th><th>操作</th></tr></thead><tbody id="channelList"><tr><td colspan="7">正在加载通道…</td></tr></tbody></table></div>
+                </article>
+            </section>
+
+            <section id="alarms" class="view-content">
+                <div class="page-heading"><div><h2>告警记录</h2><p>查看 setUp 本地 SQLite 中最近 100 条告警</p></div><button id="refresh" class="btn secondary" type="button">刷新告警</button></div>
+                <article class="panel">
+                    <div class="panel-header"><div><h3>全部告警</h3><p>告警图片保存在 setUp 数据目录</p></div><span id="alarmSummary" class="alarm-summary">0 条</span></div>
+                    <div class="table-wrap"><table class="alarm-table"><thead><tr><th>告警图片</th><th>告警时间</th><th>通道</th><th>事件类型</th><th>置信度</th><th>Agent RowID</th></tr></thead><tbody id="alarmList"><tr><td colspan="6">正在加载告警…</td></tr></tbody></table></div>
+                </article>
+            </section>
+
+            <section id="terminal" class="view-content">
+                <div class="page-heading"><div><h2>本地终端</h2><p>通过 setUp 到 Agent 的 terminal.* 协议维护设备</p></div><div><button id="open" class="btn primary" type="button">打开终端</button> <button id="close" class="btn danger" type="button" disabled>关闭终端</button></div></div>
+                <article class="panel terminal-panel"><div class="terminal-title"><span>LOCAL SHELL</span><small id="terminalState">尚未打开，连接后直接点击终端输入</small></div><div class="terminal-frame"><div id="screen" class="terminal-screen"></div></div></article>
+            </section>
+        </main>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="channelEditor" hidden>
+    <form class="modal-card" id="form">
+        <div class="modal-header"><div><h3 id="editorTitle">添加视频通道</h3><p>填写 RTSP 地址和设备本地模型文件名</p></div><button class="modal-close" id="editorClose" type="button">×</button></div>
+        <div class="modal-body channel-form"><label>通道 ID<input id="cid" required placeholder="例如：CH-01"></label><label>通道名称<input id="name" required placeholder="例如：施工隧道东侧"></label><label>RTSP 地址<input id="rtsp" required placeholder="rtsp://192.168.1.10/ch1"></label><label>加载模型文件名<input id="model" required placeholder="landslide.rknn"><small>只填写文件名，不填写目录。</small></label></div>
+        <div class="modal-footer"><button id="cancel" class="btn secondary" type="button">取消</button><button id="save" class="btn primary" type="submit">保存并下发</button></div>
+    </form>
+</div>
+
+<div class="modal-backdrop picture-detail-backdrop" id="viewer" hidden>
+    <section class="modal-card picture-detail-card">
+        <div class="modal-header"><div><h3 id="viewerTitle">检测画面</h3><p>视频画面与检测结果</p></div><button class="modal-close" id="closeViewer" type="button">×</button></div>
+        <div class="modal-body picture-detail-layout"><figure class="picture-preview"><img id="large" alt="检测画面"><figcaption><span><i></i>画面可用于识别</span><span id="caption">—</span></figcaption></figure><aside class="picture-metrics-panel"><h4>检测结果</h4><div id="viewerMetrics"></div></aside></div>
+    </section>
+</div>
+<script src="/static/xterm/xterm.js"></script>
+<script src="/static/xterm/addon-fit.js"></script>
+<script src="/static/setup.js"></script>
+</body></html>

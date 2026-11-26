@@ -1,0 +1,18 @@
+[Unit]
+Description=agent watchdog service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=kickpi
+Group=kickpi
+WorkingDirectory=/home/kickpi/testAgent
+ExecStartPre=/bin/sleep 8
+ExecStart=/home/kickpi/testAgent/agent-linux-arm64 -config /home/kickpi/testAgent/configs/agent.example.json
+Type=simple
+Restart=always
+RestartSec=30s
+
+
+[Install]
+WantedBy=multi-user.target

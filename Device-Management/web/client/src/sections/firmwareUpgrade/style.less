@@ -1,0 +1,219 @@
+// 子设备表格样式优化，防止排序功能层级穿透
+.sub-device-table {
+    z-index: 0;
+
+    // 只控制排序相关元素的层级，不影响整个表格
+    .ant-table-thead>tr>th {
+        z-index: 0;
+    }
+}
+
+.thin-scrollbar,
+.thin-scrollbar .ant-table-body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar,
+.thin-scrollbar .ant-table-body::-webkit-scrollbar {
+    width: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track,
+.thin-scrollbar .ant-table-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb,
+.thin-scrollbar .ant-table-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+}
+.thin-scrollbar:hover::-webkit-scrollbar-thumb,
+.thin-scrollbar .ant-table-body:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.35);
+}
+.app-package-management {
+  background: #fff;
+  margin: 8px 12px;
+  min-height: calc(100vh - 80px);
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+
+  &__tree {
+    width: 270px;
+    flex: 0 0 270px;
+    border-right: 1px solid #edf0f5;
+    padding-right: 16px;
+    min-height: 620px;
+  }
+
+  &__tree-header,
+  &__filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__tree-header {
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  &__tree-node {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+
+    > span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__tree-actions {
+    display: none;
+    flex: 0 0 auto;
+  }
+
+  .ant-tree-treenode:hover &__tree-actions,
+  .ant-tree-treenode-selected &__tree-actions {
+    display: inline-flex;
+  }
+
+  &__empty {
+    color: #8c8c8c;
+    padding: 24px 8px;
+    text-align: center;
+  }
+
+  &__content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    color: #1f2d3d;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  &__version-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    color: #096dd9;
+    line-height: 18px;
+    background: #eff6ff;
+    border: 1px solid #b8d7ff;
+    border-radius: 4px;
+  }
+
+  &__filters {
+    flex-wrap: nowrap;
+    margin-bottom: 16px;
+    overflow-x: auto;
+
+    > span,
+    > .ant-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .app-package-management__version-input {
+      width: 130px;
+      flex: 0 0 130px;
+    }
+
+    .ant-picker-range {
+      width: 240px;
+      flex: 0 0 240px;
+    }
+  }
+}
+
+.product-library-page {
+  min-height: calc(100vh - 80px);
+  margin: 8px 12px;
+  background: #fff;
+
+  &__header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 20px 32px 14px;
+  }
+
+  &__title {
+    position: relative;
+    padding-left: 12px;
+    color: #101531;
+    font-family: YouSheBiaoTiHei, sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+
+    &::before {
+      position: absolute;
+      top: 6px;
+      left: 0;
+      width: 3px;
+      height: 18px;
+      background: #146ee8;
+      border-radius: 2px;
+      content: "";
+    }
+  }
+
+  &__subtitle {
+    color: #969799;
+    font-family: DINExp, Arial, sans-serif;
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  &__tabs {
+    .ant-tabs-nav {
+      margin: 0;
+      padding: 0 32px;
+      border-bottom: 1px solid #edf0f5;
+    }
+
+    .ant-tabs-tab {
+      padding: 12px 0 16px;
+    }
+
+    .ant-tabs-content-holder {
+      padding: 28px 32px 32px;
+    }
+  }
+}
+
+.product-library-list {
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  &__search {
+    width: 300px;
+    background: #f5f6f8;
+    border-color: transparent;
+
+    &--sensor {
+      width: 360px;
+    }
+  }
+
+  &__table {
+    .ant-table-thead > tr > th {
+      color: #3f4652;
+      font-weight: 600;
+      background: #f4f5f7;
+    }
+  }
+}

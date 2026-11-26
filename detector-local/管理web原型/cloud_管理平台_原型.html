@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视觉边缘设备 - Cloud管理平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: none;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: 600px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding: 0 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover {
+            background: #e9ecef;
+            color: #667eea;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 30px;
+            overflow-y: auto;
+            background: #ffffff;
+        }
+
+        /* Only display the view selected from the sidebar. */
+        .view-content {
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        /* Panel */
+        .panel {
+            margin-bottom: 24px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #212529;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        /* Device Selector */
+        .device-selector-wrapper {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .device-selector-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 10px;
+        }
+
+        .multiselect-container {
+            position: relative;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .multiselect-container:hover {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .multiselect-container.active {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .multiselect-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 36px;
+            align-items: center;
+        }
+
+        .device-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .device-tag .remove:hover {
+            opacity: 1;
+        }
+
+        .multiselect-input {
+            flex: 1;
+            min-width: 150px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            padding: 4px;
+            background: transparent;
+        }
+
+        .multiselect-arrow {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .multiselect-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .multiselect-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .multiselect-dropdown.open {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f3f5;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .dropdown-item.selected {
+            background: #f0f1ff;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .dropdown-item input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .dropdown-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dropdown-item-name {
+            font-weight: 500;
+            color: #212529;
+        }
+
+        .dropdown-item-status {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge.busy {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-indicator.online {
+            background: #28a745;
+        }
+
+        .status-indicator.offline {
+            background: #dc3545;
+        }
+
+        .status-indicator.busy {
+            background: #ffc107;
+        }
+
+        /* Device List */
+        .device-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .device-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .device-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .device-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .device-info {
+            margin-bottom: 16px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f5;
+            font-size: 13px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #212529;
+            font-weight: 500;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+
+        .btn-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-danger:hover {
+            background: #f5c6cb;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content.modal-wide {
+            max-width: 1100px;
+        }
+
+        .device-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .device-actions-grid .btn {
+            justify-content: center;
+            padding-left: 8px;
+            padding-right: 8px;
+            font-size: 13px;
+        }
+
+        .channel-summary {
+            color: #6c757d;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .channel-table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .channel-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        .channel-table th,
+        .channel-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #edf0f3;
+            text-align: left;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .channel-table th {
+            color: #495057;
+            background: #f8f9fa;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .channel-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .channel-name {
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .channel-id,
+        .channel-address {
+            margin-top: 4px;
+            color: #868e96;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+
+        .channel-address {
+            max-width: 230px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .stream-state {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .stream-state::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        .stream-state.reconnecting::before {
+            background: #ffc107;
+        }
+
+        .stream-state.stopped::before {
+            background: #dc3545;
+        }
+
+        .picture-state {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 5px;
+            color: #218838;
+            background: #e7f8eb;
+            font-size: 12px;
+        }
+
+        .picture-state.interrupted {
+            color: #dc3545;
+            background: #fff0ef;
+        }
+
+        .picture-state.waiting {
+            color: #856404;
+            background: #fff7db;
+        }
+
+        .channel-empty {
+            padding: 42px !important;
+            color: #868e96;
+            text-align: center !important;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #6c757d;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #212529;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            border: 1px solid #333;
+        }
+
+        .terminal-line {
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .terminal-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        /* Firmware Upload */
+        .firmware-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .firmware-upload:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .firmware-upload.drag-over {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.15);
+        }
+
+        .firmware-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .firmware-text {
+            font-size: 14px;
+            color: #212529;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .firmware-hint {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .firmware-list {
+            margin-top: 24px;
+        }
+
+        .firmware-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .firmware-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .firmware-name {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .firmware-meta {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                padding: 16px;
+            }
+
+            .device-list {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .device-list {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>
+                    <div class="header-icon">📱</div>
+                    视觉边缘设备 Cloud管理平台
+                </h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span>Admin User</span>
+                    <div class="avatar">👤</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="nav-section">
+                    <div class="nav-title">管理</div>
+                    <div class="nav-item active" onclick="switchView('dashboard')">
+                        <div class="nav-icon">📊</div>
+                        <span>仪表盘</span>
+                    </div>
+                    <div class="nav-item" onclick="switchView('devices')">
+                        <div class="nav-icon">📱</div>
+                        <span>设备管理</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">操作</div>
+                    <div class="nav-item" onclick="switchView('terminal')">
+                        <div class="nav-icon">💻</div>
+                        <span>远程终端</span>
+                    </div>
+                    <div class="nav-item" onclick="switchView('firmware')">
+                        <div class="nav-icon">⬆️</div>
+                        <span>固件下发</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Dashboard View -->
+                <div id="dashboard" class="view-content active">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📊 总体概览</div>
+                        </div>
+                        <div class="panel-content">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+                                <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 32px; font-weight: bold; color: #667eea; margin-bottom: 8px;">12</div>
+                                    <div style="font-size: 14px; color: #6c757d; font-weight: 500;">在线设备</div>
+                                </div>
+                                <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 32px; font-weight: bold; color: #764ba2; margin-bottom: 8px;">3</div>
+                                    <div style="font-size: 14px; color: #6c757d; font-weight: 500;">离线设备</div>
+                                </div>
+                                <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 32px; font-weight: bold; color: #28a745; margin-bottom: 8px;">98.5%</div>
+                                    <div style="font-size: 14px; color: #6c757d; font-weight: 500;">可用性</div>
+                                </div>
+                                <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 32px; font-weight: bold; color: #ffc107; margin-bottom: 8px;">v2.1.0</div>
+                                    <div style="font-size: 14px; color: #6c757d; font-weight: 500;">最新固件</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📱 最近活跃设备</div>
+                        </div>
+                        <div class="panel-content">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #e9ecef;">
+                                        <th style="text-align: left; padding: 12px; font-weight: 600; color: #495057; font-size: 13px;">设备名称</th>
+                                        <th style="text-align: left; padding: 12px; font-weight: 600; color: #495057; font-size: 13px;">状态</th>
+                                        <th style="text-align: left; padding: 12px; font-weight: 600; color: #495057; font-size: 13px;">固件版本</th>
+                                        <th style="text-align: left; padding: 12px; font-weight: 600; color: #495057; font-size: 13px;">最后连接</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid #f1f3f5;">
+                                        <td style="padding: 12px; color: #212529;">边缘设备-001</td>
+                                        <td style="padding: 12px;"><span class="status-badge online"><span class="status-indicator online"></span>在线</span></td>
+                                        <td style="padding: 12px; color: #212529; font-family: monospace; font-size: 13px;">v2.1.0</td>
+                                        <td style="padding: 12px; color: #6c757d; font-size: 13px;">5分钟前</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #f1f3f5;">
+                                        <td style="padding: 12px; color: #212529;">边缘设备-002</td>
+                                        <td style="padding: 12px;"><span class="status-badge online"><span class="status-indicator online"></span>在线</span></td>
+                                        <td style="padding: 12px; color: #212529; font-family: monospace; font-size: 13px;">v2.1.0</td>
+                                        <td style="padding: 12px; color: #6c757d; font-size: 13px;">2分钟前</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #f1f3f5;">
+                                        <td style="padding: 12px; color: #212529;">边缘设备-003</td>
+                                        <td style="padding: 12px;"><span class="status-badge offline"><span class="status-indicator offline"></span>离线</span></td>
+                                        <td style="padding: 12px; color: #212529; font-family: monospace; font-size: 13px;">v2.0.5</td>
+                                        <td style="padding: 12px; color: #6c757d; font-size: 13px;">1小时前</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Devices View -->
+                <div id="devices" class="view-content">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📱 设备列表</div>
+                            <div class="panel-actions">
+                                <button class="btn btn-primary btn-small" onclick="openAddDeviceModal()">
+                                    ➕ 添加设备
+                                </button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <!-- Multi-Device Selector -->
+                            <div class="device-selector-wrapper">
+                                <label class="device-selector-label">选择要操作的设备 (支持多选和搜索)</label>
+                                <div class="multiselect-container" id="deviceMultiselect">
+                                    <div class="multiselect-display" id="deviceDisplay">
+                                        <input 
+                                            type="text" 
+                                            class="multiselect-input" 
+                                            id="deviceSearch" 
+                                            placeholder="输入设备名称或ID..."
+                                        >
+                                        <div class="multiselect-arrow" id="deviceArrow">▼</div>
+                                    </div>
+                                    <div class="multiselect-dropdown" id="deviceDropdown">
+                                        <!-- Populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Device Cards -->
+                            <div class="device-list" id="deviceList">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terminal View -->
+                <div id="terminal" class="view-content">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">💻 远程终端</div>
+                        </div>
+                        <div class="panel-content">
+                            <!-- Device Selector for Terminal -->
+                            <div class="form-group">
+                                <label class="form-label">选择设备</label>
+                                <select class="form-select" id="terminalDevice" onchange="connectTerminal()">
+                                    <option value="">-- 选择一个设备 --</option>
+                                    <option value="device-001">边缘设备-001 (在线)</option>
+                                    <option value="device-002">边缘设备-002 (在线)</option>
+                                    <option value="device-003">边缘设备-003 (离线)</option>
+                                    <option value="device-004">边缘设备-004 (在线)</option>
+                                </select>
+                            </div>
+
+                            <div class="tabs">
+                                <div class="tab active" onclick="switchTerminalTab('console')">控制台</div>
+                                <div class="tab" onclick="switchTerminalTab('logs')">日志</div>
+                                <div class="tab" onclick="switchTerminalTab('system')">系统信息</div>
+                            </div>
+
+                            <!-- Console Tab -->
+                            <div id="console-tab" class="tab-content active">
+                                <div class="terminal" id="terminalConsole">
+                                    <div class="terminal-line">欢迎使用远程终端</div>
+                                    <div class="terminal-line" style="color: #6c757d; font-size: 12px;">请选择一个在线设备进行连接</div>
+                                </div>
+                                <div class="terminal-input-group">
+                                    <input type="text" class="terminal-input" id="terminalInput" placeholder="输入命令..." onkeypress="handleTerminalCommand(event)">
+                                    <button class="btn btn-primary" onclick="sendTerminalCommand()">发送</button>
+                                </div>
+                            </div>
+
+                            <!-- Logs Tab -->
+                            <div id="logs-tab" class="tab-content">
+                                <div class="terminal" id="terminalLogs">
+                                    <div class="terminal-line" style="color: #6c757d;">[2024-01-15 10:30:45] 系统启动完成</div>
+                                    <div class="terminal-line" style="color: #6c757d;">[2024-01-15 10:30:46] 连接到云服务器</div>
+                                    <div class="terminal-line" style="color: #6c757d;">[2024-01-15 10:30:50] 设备就绪</div>
+                                </div>
+                            </div>
+
+                            <!-- System Tab -->
+                            <div id="system-tab" class="tab-content">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                                    <div style="background: #f8f9fa; padding: 16px; border-radius: 8px;">
+                                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 8px; font-weight: 600;">CPU 使用率</div>
+                                        <div style="font-size: 24px; font-weight: bold; color: #667eea; margin-bottom: 8px;">45%</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 45%;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="background: #f8f9fa; padding: 16px; border-radius: 8px;">
+                                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 8px; font-weight: 600;">内存使用率</div>
+                                        <div style="font-size: 24px; font-weight: bold; color: #764ba2; margin-bottom: 8px;">68%</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 68%;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="background: #f8f9fa; padding: 16px; border-radius: 8px;">
+                                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 8px; font-weight: 600;">存储空间</div>
+                                        <div style="font-size: 24px; font-weight: bold; color: #28a745; margin-bottom: 8px;">32 GB</div>
+                                        <div style="font-size: 12px; color: #6c757d;">剩余: 12 GB</div>
+                                    </div>
+                                    <div style="background: #f8f9fa; padding: 16px; border-radius: 8px;">
+                                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 8px; font-weight: 600;">运行时间</div>
+                                        <div style="font-size: 24px; font-weight: bold; color: #ffc107; margin-bottom: 8px;">45天</div>
+                                        <div style="font-size: 12px; color: #6c757d;">自上次重启以来</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Firmware View -->
+                <div id="firmware" class="view-content">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">⬆️ 固件下发</div>
+                            <div class="panel-actions">
+                                <button class="btn btn-primary btn-small" onclick="openFirmwareUploadModal()">
+                                    📤 上传新固件
+                                </button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <!-- Device Selector for Firmware -->
+                            <div class="form-group">
+                                <label class="form-label">选择目标设备 (支持批量选择)</label>
+                                <div class="multiselect-container" id="firmwareMultiselect">
+                                    <div class="multiselect-display" id="firmwareDisplay">
+                                        <input 
+                                            type="text" 
+                                            class="multiselect-input" 
+                                            id="firmwareSearch" 
+                                            placeholder="选择要升级的设备..."
+                                        >
+                                        <div class="multiselect-arrow" id="firmwareArrow">▼</div>
+                                    </div>
+                                    <div class="multiselect-dropdown" id="firmwareDropdown">
+                                        <!-- Populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Firmware Selection -->
+                            <div class="form-group">
+                                <label class="form-label">选择要下发的固件版本</label>
+                                <select class="form-select" id="firmwareVersion">
+                                    <option value="">-- 选择固件版本 --</option>
+                                    <option value="v2.1.0">v2.1.0 (最新) - 2024-01-15</option>
+                                    <option value="v2.0.5">v2.0.5 - 2024-01-10</option>
+                                    <option value="v2.0.0">v2.0.0 - 2024-01-01</option>
+                                </select>
+                            </div>
+
+                            <!-- Firmware Details -->
+                            <div class="form-group">
+                                <label class="form-label">固件详情</label>
+                                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.8; color: #495057;">
+                                    <strong style="color: #212529; display: block; margin-bottom: 8px;">版本: v2.1.0</strong>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="color: #212529;">发布时间:</strong> 2024-01-15 14:30:00
+                                    </div>
+                                    <div style="margin-bottom: 12px;">
+                                        <strong style="color: #212529; display: block; margin-bottom: 4px;">更新内容:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>修复了内存泄漏问题</li>
+                                            <li>优化了图像处理性能</li>
+                                            <li>增强了网络稳定性</li>
+                                            <li>更新了安全证书</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upgrade Options -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                    <input type="radio" name="upgradeMode" value="immediate" checked>
+                                    <span style="font-weight: 500; color: #212529;">立即升级</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                    <input type="radio" name="upgradeMode" value="scheduled">
+                                    <span style="font-weight: 500; color: #212529;">定时升级</span>
+                                </label>
+                            </div>
+
+                            <!-- Scheduled Time (hidden by default) -->
+                            <div class="form-group" id="scheduledTimeGroup" style="display: none;">
+                                <label class="form-label">升级时间</label>
+                                <input type="datetime-local" class="form-input" id="upgradeTime">
+                            </div>
+
+                            <!-- Upgrade Actions -->
+                            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                                <button class="btn btn-primary" onclick="startFirmwareUpgrade()">
+                                    ⬆️ 开始升级
+                                </button>
+                                <button class="btn btn-secondary" onclick="validateFirmware()">
+                                    ✓ 验证固件
+                                </button>
+                            </div>
+
+                            <!-- Upgrade Progress -->
+                            <div class="form-group">
+                                <label class="form-label">升级进度</label>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                                <span style="font-size: 13px; color: #495057;">边缘设备-001</span>
+                                                <span style="font-size: 13px; color: #6c757d;">65%</span>
+                                            </div>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 65%;"></div>
+                                            </div>
+                                        </div>
+                                        <span class="status-badge online" style="margin-top: 16px;">升级中</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                                <span style="font-size: 13px; color: #495057;">边缘设备-002</span>
+                                                <span style="font-size: 13px; color: #6c757d;">100%</span>
+                                            </div>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 100%;"></div>
+                                            </div>
+                                        </div>
+                                        <span class="status-badge online" style="margin-top: 16px; background: #d4edda; color: #155724;">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Device Modal -->
+    <div class="modal" id="addDeviceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">添加新设备</div>
+                <button class="modal-close" onclick="closeAddDeviceModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">设备名称</label>
+                    <input type="text" class="form-input" placeholder="例如: 边缘设备-005">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">设备ID</label>
+                    <input type="text" class="form-input" placeholder="例如: device-005">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">设备类型</label>
+                    <select class="form-select">
+                        <option>视觉处理设备</option>
+                        <option>通用边缘计算设备</option>
+                        <option>其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-textarea" placeholder="输入设备备注信息..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddDeviceModal()">取消</button>
+                <button class="btn btn-primary" onclick="addDevice()">添加设备</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firmware Upload Modal -->
+    <div class="modal" id="firmwareUploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">上传新固件</div>
+                <button class="modal-close" onclick="closeFirmwareUploadModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">固件文件</label>
+                    <div class="firmware-upload" id="firmwareDropZone" ondrop="handleFirmwareDrop(event)" ondragover="handleFirmwareDragOver(event)" ondragleave="handleFirmwareDragLeave(event)">
+                        <div class="firmware-icon">📦</div>
+                        <div class="firmware-text">拖拽文件或点击选择</div>
+                        <div class="firmware-hint">支持 .bin, .hex, .elf 格式，最大 500MB</div>
+                        <input type="file" id="firmwareFile" style="display: none;" accept=".bin,.hex,.elf" onchange="handleFirmwareSelect(event)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">固件版本号</label>
+                    <input type="text" class="form-input" placeholder="例如: v2.2.0">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">发布说明</label>
+                    <textarea class="form-textarea" placeholder="输入此版本的更新内容和说明..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeFirmwareUploadModal()">取消</button>
+                <button class="btn btn-primary" onclick="uploadFirmware()">上传固件</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Video Channels Modal -->
+    <div class="modal" id="videoChannelsModal">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="videoChannelsTitle">视频通道</div>
+                    <div style="margin-top: 5px; color: #6c757d; font-size: 12px;">管理摄像机接入、RTSP 地址和模型加载配置</div>
+                </div>
+                <button class="modal-close" onclick="closeVideoChannelsModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <div class="channel-summary" id="channelSummary" style="margin-bottom: 0;">共 0 路视频通道</div>
+                    <button class="btn btn-primary btn-small" onclick="openChannelConfigModal()">＋ 添加通道</button>
+                </div>
+                <div class="channel-table-wrapper">
+                    <table class="channel-table">
+                        <thead>
+                            <tr>
+                                <th>通道</th>
+                                <th>视频状态</th>
+                                <th>画面</th>
+                                <th>加载模型文件名</th>
+                                <th>实时帧率</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="videoChannelList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Video Channel Modal -->
+    <div class="modal" id="channelConfigModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="channelConfigTitle">添加视频通道</div>
+                <button class="modal-close" onclick="closeChannelConfigModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">通道名称</label>
+                    <input type="text" class="form-input" id="channelName" placeholder="例如：西侧坡脚监控">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">RTSP 地址</label>
+                    <input type="text" class="form-input" id="channelRTSP" placeholder="例如：rtsp://192.168.1.40:554/stream01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">加载模型文件名</label>
+                    <input type="text" class="form-input" id="channelModel" placeholder="例如：landslide_v1.3.2.rknn">
+                    <div style="margin-top: 6px; color: #868e96; font-size: 12px;">填写设备本地已部署的模型文件名，视频流启动时自动加载。</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeChannelConfigModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveVideoChannel()">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock device data
+        const devices = [
+            {
+                id: 'device-001',
+                name: '边缘设备-001',
+                status: 'online',
+                type: '视觉处理设备',
+                firmware: 'v2.1.0',
+                lastSeen: '5分钟前',
+                ip: '192.168.1.101',
+                cpuModel: 'Intel Core i7-12700H',
+                memorySize: '32 GB',
+                diskSize: '1 TB SSD',
+                cpu: 45,
+                memory: 68,
+                disk: 41
+            },
+            {
+                id: 'device-002',
+                name: '边缘设备-002',
+                status: 'online',
+                type: '视觉处理设备',
+                firmware: 'v2.1.0',
+                lastSeen: '2分钟前',
+                ip: '192.168.1.102',
+                cpuModel: 'ARM Cortex-A78AE',
+                memorySize: '16 GB',
+                diskSize: '512 GB SSD',
+                cpu: 32,
+                memory: 52,
+                disk: 36
+            },
+            {
+                id: 'device-003',
+                name: '边缘设备-003',
+                status: 'offline',
+                type: '视觉处理设备',
+                firmware: 'v2.0.5',
+                lastSeen: '1小时前',
+                ip: '192.168.1.103',
+                cpuModel: 'Intel Core i5-10500T',
+                memorySize: '16 GB',
+                diskSize: '512 GB SSD',
+                cpu: 0,
+                memory: 0,
+                disk: 0
+            },
+            {
+                id: 'device-004',
+                name: '边缘设备-004',
+                status: 'online',
+                type: '通用边缘计算设备',
+                firmware: 'v2.1.0',
+                lastSeen: '刚刚',
+                ip: '192.168.1.104',
+                cpuModel: 'AMD Ryzen 7 5700G',
+                memorySize: '64 GB',
+                diskSize: '2 TB SSD',
+                cpu: 28,
+                memory: 45,
+                disk: 57
+            }
+        ];
+
+        const videoChannels = {
+            'device-001': [
+                { id: 'CH-01', name: '北侧边坡主视角', rtsp: 'rtsp://192.168.1.40:554/stream01', model: 'landslide_v1.3.2.rknn', streamStatus: 'running', pictureStatus: 'normal', fps: 12.4 },
+                { id: 'CH-02', name: '施工便道东侧', rtsp: 'rtsp://192.168.1.41:554/stream01', model: 'landslide_v1.3.2.rknn', streamStatus: 'running', pictureStatus: 'normal', fps: 11.8 },
+                { id: 'CH-03', name: '排水沟全景', rtsp: 'rtsp://192.168.1.42:554/stream01', model: 'debris_flow_v2.0.0.rknn', streamStatus: 'reconnecting', pictureStatus: 'interrupted', fps: null }
+            ],
+            'device-002': [
+                { id: 'CH-01', name: '仓库入口', rtsp: 'rtsp://192.168.2.20:554/main', model: 'person_vehicle_v2.1.0.rknn', streamStatus: 'running', pictureStatus: 'normal', fps: 24.6 }
+            ],
+            'device-003': [],
+            'device-004': [
+                { id: 'CH-01', name: '园区全景', rtsp: 'rtsp://192.168.4.10:554/stream01', model: 'scene_detect_v1.0.4.rknn', streamStatus: 'running', pictureStatus: 'normal', fps: 15.2 }
+            ]
+        };
+
+        let selectedDevices = [];
+        let currentVideoDeviceId = '';
+        let editingChannelId = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMultiselect('device');
+            initializeMultiselect('firmware');
+            renderDeviceList();
+            setupUpgradeMode();
+            setupFirmwareUpload();
+        });
+
+        // Initialize multiselect dropdown
+        function initializeMultiselect(type) {
+            const container = document.getElementById(`${type}Multiselect`);
+            const display = document.getElementById(`${type}Display`);
+            const dropdown = document.getElementById(`${type}Dropdown`);
+            const arrow = document.getElementById(`${type}Arrow`);
+            const input = document.getElementById(`${type}Search`);
+
+            // Toggle dropdown
+            display.addEventListener('click', () => {
+                dropdown.classList.toggle('open');
+                arrow.classList.toggle('open');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    dropdown.classList.remove('open');
+                    arrow.classList.remove('open');
+                }
+            });
+
+            // Search functionality
+            input.addEventListener('input', (e) => {
+                filterDevices(type, e.target.value);
+            });
+
+            // Populate dropdown
+            populateDeviceDropdown(type);
+        }
+
+        // Populate device dropdown
+        function populateDeviceDropdown(type) {
+            const dropdown = document.getElementById(`${type}Dropdown`);
+            dropdown.innerHTML = devices.map(device => `
+                <div class="dropdown-item" onclick="toggleDevice('${device.id}', '${type}')">
+                    <input type="checkbox" id="checkbox-${device.id}-${type}" onchange="toggleDevice('${device.id}', '${type}')">
+                    <div class="dropdown-item-info">
+                        <div class="dropdown-item-name">${device.name}</div>
+                        <div class="dropdown-item-status">
+                            ${device.ip} • 
+                            <span class="status-badge ${device.status}">
+                                <span class="status-indicator ${device.status}"></span>
+                                ${device.status === 'online' ? '在线' : '离线'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter devices
+        function filterDevices(type, searchText) {
+            const dropdown = document.getElementById(`${type}Dropdown`);
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchText.toLowerCase()) ? 'flex' : 'none';
+            });
+        }
+
+        // Toggle device selection
+        function toggleDevice(deviceId, type) {
+            const checkbox = document.getElementById(`checkbox-${deviceId}-${type}`);
+            const device = devices.find(d => d.id === deviceId);
+
+            if (checkbox.checked) {
+                if (!selectedDevices.find(d => d.id === deviceId)) {
+                    selectedDevices.push(device);
+                }
+            } else {
+                selectedDevices = selectedDevices.filter(d => d.id !== deviceId);
+            }
+
+            updateSelectedDevicesDisplay(type);
+        }
+
+        // Update selected devices display
+        function updateSelectedDevicesDisplay(type) {
+            const display = document.getElementById(`${type}Display`);
+            const input = display.querySelector('.multiselect-input');
+            const tags = display.querySelectorAll('.device-tag');
+            
+            tags.forEach(tag => tag.remove());
+
+            selectedDevices.forEach(device => {
+                const tag = document.createElement('div');
+                tag.className = 'device-tag';
+                tag.innerHTML = `
+                    ${device.name}
+                    <span class="remove" onclick="removeSelectedDevice('${device.id}', '${type}')">×</span>
+                `;
+                display.insertBefore(tag, input);
+            });
+
+            if (selectedDevices.length > 0) {
+                input.placeholder = '再次输入以搜索更多...';
+            } else {
+                input.placeholder = type === 'device' ? '输入设备名称或ID...' : '选择要升级的设备...';
+            }
+        }
+
+        // Remove selected device
+        function removeSelectedDevice(deviceId, type) {
+            const checkbox = document.getElementById(`checkbox-${deviceId}-${type}`);
+            if (checkbox) {
+                checkbox.checked = false;
+                toggleDevice(deviceId, type);
+            }
+        }
+
+        // Render device list
+        function renderDeviceList() {
+            const list = document.getElementById('deviceList');
+            list.innerHTML = devices.map(device => `
+                <div class="device-card">
+                    <div class="device-header">
+                        <div class="device-title">${device.name}</div>
+                        <div class="device-status">
+                            <span class="status-badge ${device.status}">
+                                <span class="status-indicator ${device.status}"></span>
+                                ${device.status === 'online' ? '在线' : '离线'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="device-info">
+                        <div class="info-row">
+                            <span class="info-label">设备类型:</span>
+                            <span class="info-value">${device.type}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">固件版本:</span>
+                            <span class="info-value">${device.firmware}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">IP地址:</span>
+                            <span class="info-value">${device.ip}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">CPU型号:</span>
+                            <span class="info-value">${device.cpuModel}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">内存大小:</span>
+                            <span class="info-value">${device.memorySize}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">硬盘大小:</span>
+                            <span class="info-value">${device.diskSize}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">最后连接:</span>
+                            <span class="info-value">${device.lastSeen}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">CPU / 内存 / 硬盘:</span>
+                            <span class="info-value">${device.cpu}% / ${device.memory}% / ${device.disk}%</span>
+                        </div>
+                    </div>
+                    <div class="device-actions-grid">
+                        <button class="btn btn-primary btn-small" onclick="openVideoChannels('${device.id}')">
+                            📹 视频通道
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="openTerminalForDevice('${device.id}')">
+                            💻 终端
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="openFirmwareForDevice('${device.id}')">
+                            ⬆️ 升级
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Switch view
+        function switchView(view) {
+            // Hide all views
+            document.querySelectorAll('.view-content').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show selected view
+            const targetView = document.getElementById(view);
+            if (targetView) {
+                targetView.classList.add('active');
+            }
+
+            // Start each view from the top when navigating with the sidebar.
+            document.querySelector('.content-area').scrollTop = 0;
+
+            // Update sidebar active state
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Find the clicked nav item by checking which view it corresponds to
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                const onclick = item.getAttribute('onclick');
+                if (onclick && onclick.includes(`'${view}'`)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Terminal functions
+        function switchTerminalTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(`${tab}-tab`).classList.add('active');
+
+            document.querySelectorAll('.tab').forEach(el => {
+                el.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function connectTerminal() {
+            const device = document.getElementById('terminalDevice').value;
+            const console = document.getElementById('terminalConsole');
+            if (device) {
+                console.innerHTML = `
+                    <div class="terminal-line" style="color: #28a745;">连接到 ${device}...</div>
+                    <div class="terminal-line" style="color: #28a745;">连接成功</div>
+                    <div class="terminal-line"># </div>
+                `;
+            }
+        }
+
+        function handleTerminalCommand(event) {
+            if (event.key === 'Enter') {
+                sendTerminalCommand();
+            }
+        }
+
+        function sendTerminalCommand() {
+            const input = document.getElementById('terminalInput');
+            const console = document.getElementById('terminalConsole');
+            
+            if (input.value.trim()) {
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                line.textContent = '# ' + input.value;
+                console.appendChild(line);
+
+                const response = document.createElement('div');
+                response.className = 'terminal-line';
+                response.style.color = '#d4d4d4';
+                response.textContent = '命令已发送...';
+                console.appendChild(response);
+
+                console.scrollTop = console.scrollHeight;
+                input.value = '';
+            }
+        }
+
+        // Firmware functions
+        function setupUpgradeMode() {
+            const radios = document.querySelectorAll('input[name="upgradeMode"]');
+            radios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const scheduledGroup = document.getElementById('scheduledTimeGroup');
+                    scheduledGroup.style.display = this.value === 'scheduled' ? 'block' : 'none';
+                });
+            });
+        }
+
+        function setupFirmwareUpload() {
+            const zone = document.getElementById('firmwareDropZone');
+            zone.addEventListener('click', () => {
+                document.getElementById('firmwareFile').click();
+            });
+        }
+
+        function handleFirmwareDragOver(event) {
+            event.preventDefault();
+            document.getElementById('firmwareDropZone').classList.add('drag-over');
+        }
+
+        function handleFirmwareDragLeave(event) {
+            event.preventDefault();
+            document.getElementById('firmwareDropZone').classList.remove('drag-over');
+        }
+
+        function handleFirmwareDrop(event) {
+            event.preventDefault();
+            document.getElementById('firmwareDropZone').classList.remove('drag-over');
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('firmwareFile').files = files;
+            }
+        }
+
+        function handleFirmwareSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                console.log('选择文件:', file.name);
+            }
+        }
+
+        function startFirmwareUpgrade() {
+            const devices = selectedDevices;
+            const firmware = document.getElementById('firmwareVersion').value;
+            
+            if (!devices.length || !firmware) {
+                alert('请选择设备和固件版本');
+                return;
+            }
+
+            alert(`开始升级 ${devices.length} 个设备到 ${firmware}`);
+        }
+
+        function validateFirmware() {
+            alert('固件验证中...');
+        }
+
+        // Modal functions
+        function openAddDeviceModal() {
+            document.getElementById('addDeviceModal').classList.add('open');
+        }
+
+        function closeAddDeviceModal() {
+            document.getElementById('addDeviceModal').classList.remove('open');
+        }
+
+        function addDevice() {
+            alert('设备已添加');
+            closeAddDeviceModal();
+        }
+
+        function openFirmwareUploadModal() {
+            document.getElementById('firmwareUploadModal').classList.add('open');
+        }
+
+        function closeFirmwareUploadModal() {
+            document.getElementById('firmwareUploadModal').classList.remove('open');
+        }
+
+        function uploadFirmware() {
+            alert('固件已上传');
+            closeFirmwareUploadModal();
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
+        function openVideoChannels(deviceId) {
+            currentVideoDeviceId = deviceId;
+            const device = devices.find(item => item.id === deviceId);
+            document.getElementById('videoChannelsTitle').textContent = `${device?.name || deviceId} · 视频通道`;
+            renderVideoChannels();
+            document.getElementById('videoChannelsModal').classList.add('open');
+        }
+
+        function closeVideoChannelsModal() {
+            document.getElementById('videoChannelsModal').classList.remove('open');
+        }
+
+        function renderVideoChannels() {
+            const channels = videoChannels[currentVideoDeviceId] || [];
+            const streamLabels = { running: '运行中', reconnecting: '重连中', stopped: '已停止' };
+            const pictureLabels = { normal: '正常', interrupted: '断流', waiting: '等待视频' };
+            document.getElementById('channelSummary').textContent = `共 ${channels.length} 路视频通道，其中 ${channels.filter(item => item.streamStatus === 'running').length} 路运行中`;
+            document.getElementById('videoChannelList').innerHTML = channels.length ? channels.map(channel => `
+                <tr>
+                    <td>
+                        <div class="channel-name">${escapeHTML(channel.name)}</div>
+                        <div class="channel-id">${escapeHTML(channel.id)}</div>
+                        <div class="channel-address" title="${escapeHTML(channel.rtsp)}">${escapeHTML(channel.rtsp)}</div>
+                    </td>
+                    <td><span class="stream-state ${channel.streamStatus}">${streamLabels[channel.streamStatus]}</span></td>
+                    <td><span class="picture-state ${channel.pictureStatus}">${pictureLabels[channel.pictureStatus]}</span></td>
+                    <td style="font-family: 'Courier New', monospace; font-size: 12px;">${escapeHTML(channel.model)}</td>
+                    <td>${channel.fps == null ? '—' : `${channel.fps.toFixed(1)} FPS`}</td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-secondary btn-small" onclick="openChannelConfigModal('${channel.id}')">编辑</button>
+                            <button class="btn btn-danger btn-small" onclick="removeVideoChannel('${channel.id}')">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') : '<tr><td colspan="6" class="channel-empty">该设备尚未配置视频通道，请点击“添加通道”进行配置。</td></tr>';
+        }
+
+        function openChannelConfigModal(channelId = '') {
+            editingChannelId = channelId;
+            const channel = (videoChannels[currentVideoDeviceId] || []).find(item => item.id === channelId);
+            document.getElementById('channelConfigTitle').textContent = channel ? '编辑视频通道' : '添加视频通道';
+            document.getElementById('channelName').value = channel?.name || '';
+            document.getElementById('channelRTSP').value = channel?.rtsp || '';
+            document.getElementById('channelModel').value = channel?.model || '';
+            document.getElementById('channelConfigModal').classList.add('open');
+        }
+
+        function closeChannelConfigModal() {
+            document.getElementById('channelConfigModal').classList.remove('open');
+            editingChannelId = '';
+        }
+
+        function saveVideoChannel() {
+            const name = document.getElementById('channelName').value.trim();
+            const rtsp = document.getElementById('channelRTSP').value.trim();
+            const model = document.getElementById('channelModel').value.trim();
+            if (!name || !rtsp || !model) {
+                alert('请完整填写通道名称、RTSP 地址和加载模型文件名');
+                return;
+            }
+            if (!/^rtsps?:\/\//i.test(rtsp)) {
+                alert('RTSP 地址应以 rtsp:// 或 rtsps:// 开头');
+                return;
+            }
+            const channels = videoChannels[currentVideoDeviceId] || (videoChannels[currentVideoDeviceId] = []);
+            const existing = channels.find(item => item.id === editingChannelId);
+            if (existing) {
+                existing.name = name;
+                existing.rtsp = rtsp;
+                existing.model = model;
+            } else {
+                const nextNumber = channels.reduce((max, item) => Math.max(max, Number(item.id.replace('CH-', '')) || 0), 0) + 1;
+                const device = devices.find(item => item.id === currentVideoDeviceId);
+                channels.push({
+                    id: `CH-${String(nextNumber).padStart(2, '0')}`,
+                    name,
+                    rtsp,
+                    model,
+                    streamStatus: device?.status === 'online' ? 'running' : 'stopped',
+                    pictureStatus: device?.status === 'online' ? 'normal' : 'waiting',
+                    fps: device?.status === 'online' ? 12.0 : null
+                });
+            }
+            closeChannelConfigModal();
+            renderVideoChannels();
+        }
+
+        function removeVideoChannel(channelId) {
+            const channel = (videoChannels[currentVideoDeviceId] || []).find(item => item.id === channelId);
+            if (!channel || !confirm(`确定删除视频通道“${channel.name}”吗？`)) return;
+            videoChannels[currentVideoDeviceId] = videoChannels[currentVideoDeviceId].filter(item => item.id !== channelId);
+            renderVideoChannels();
+        }
+
+        function openTerminalForDevice(deviceId) {
+            switchView('terminal');
+            document.getElementById('terminalDevice').value = deviceId;
+            connectTerminal();
+        }
+
+        function openFirmwareForDevice(deviceId) {
+            switchView('firmware');
+            selectedDevices = [devices.find(d => d.id === deviceId)];
+            updateSelectedDevicesDisplay('firmware');
+        }
+    </script>
+</body>
+</html>

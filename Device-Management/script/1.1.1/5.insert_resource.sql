@@ -1,0 +1,9 @@
+INSERT INTO public.resource
+(code, "name", parent_resource)
+VALUES('ADDPARAMETERTEMPLATE', '新增参数模板', 'PARAMETERTEMPLATE');
+INSERT INTO public.resource
+(code, "name", parent_resource)
+VALUES('EDITPARAMETERTEMPLATE', '修改参数模板', 'PARAMETERTEMPLATE');
+INSERT INTO public.resource
+(code, "name", parent_resource)
+VALUES('DELETEPARAMETERTEMPLATE', '删除参数模板', 'PARAMETERTEMPLATE');

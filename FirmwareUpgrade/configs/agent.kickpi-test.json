@@ -1,0 +1,24 @@
+{
+  "server_url": "https://dvcpltapitest.anxinyun.cn",
+  "device_name": "kickpi",
+  "device_interface": "",
+  "state_file": "/home/kickpi/testAgent/agent-state.json",
+  "database_file": "/home/kickpi/testAgent/db/agent.db",
+  "allowed_target_dir": "./received-firmware",
+  "heartbeat_interval_seconds": 60,
+  "websocket_reconnect_max_seconds": 60,
+  "file_download_timeout_seconds": 1800,
+  "detector_ws_url": "ws://127.0.0.1:8090",
+  "setup_listen": "127.0.0.1:8085",
+  "setup_token": "",
+  "terminal": {
+    "enabled": true,
+    "shells": ["/bin/bash"],
+    "max_sessions": 2
+  },
+  "sku": "RK3576",
+  "runtime_version": "2.0",
+  "model_version": "2.0",
+  "address": "10.8.30.54",
+  "allow_remote_reboot": true
+}

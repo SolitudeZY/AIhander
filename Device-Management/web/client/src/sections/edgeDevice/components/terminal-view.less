@@ -1,0 +1,11 @@
+// Inline the global xterm selectors through Less: the webpack CSS rule enables
+// CSS modules, which would rename the classes created by xterm itself.
+@import (inline) "../../../../../node_modules/@xterm/xterm/css/xterm.css";
+
+.edge-terminal-screen {
+  width: 100%;
+  height: 340px;
+  margin-top: 10px;
+  overflow: hidden;
+  .xterm { height: 100%; }
+}

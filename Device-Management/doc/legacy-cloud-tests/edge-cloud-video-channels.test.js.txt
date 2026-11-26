@@ -1,0 +1,76 @@
+"use strict";
+
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const http = require("node:http");
+const { once } = require("node:events");
+const request = require("superagent");
+const { listDevices, updateVideoChannel } = require("../app/lib/controllers/firmwareUpgrade/edge-cloud");
+
+test("edge device list preserves abnormal status and supports abnormal filter", async () => {
+  const devices = [
+    { id: "normal-1", name: "normal", abnormal: "正常" },
+    { id: "abnormal-1", name: "abnormal", abnormal: "存在异常" },
+  ];
+  const makeContext = (abnormal) => ({
+    query: abnormal ? { abnormal } : {},
+    path: "/edgeCloud/devices",
+    fs: {
+      logger: { error() {} },
+      dc: { models: { ProjectDevice: { findAll: async () => [] } } },
+      edgeCloudRequest: { get: async () => devices },
+    },
+    app: { fs: { edgeCloudRequest: { get: async () => devices } } },
+  });
+
+  const all = makeContext();
+  await listDevices(all);
+  assert.deepEqual(all.body, devices.map(device => ({ ...device, projectId: null, projectName: null })));
+  const abnormal = makeContext("abnormal");
+  await listDevices(abnormal);
+  assert.deepEqual(abnormal.body, [{ ...devices[1], projectId: null, projectName: null }]);
+});
+
+for (const sample of [
+  { status: 400, body: { error: "model_name must be a valid .rknn or .onnx file name" } },
+  { status: 503, body: { error: "device is offline" } },
+  { status: 409, body: { error: "video channel revision or name conflict" } },
+  { status: 504, body: { error: "device video channel request timed out" } },
+  { status: 400, body: { message: "legacy error message" } },
+]) {
+  const message = sample.body.error || sample.body.message;
+  test(`channel update preserves Cloud HTTP ${sample.status}: ${message}`, async (t) => {
+    const received = [];
+    const cloud = http.createServer(async (req, res) => {
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      received.push({ method: req.method, url: req.url, body: JSON.parse(body) });
+      res.writeHead(sample.status, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(sample.body));
+    });
+    cloud.listen(0, "127.0.0.1");
+    await once(cloud, "listening");
+    t.after(() => new Promise(resolve => cloud.close(resolve)));
+    const root = `http://127.0.0.1:${cloud.address().port}`;
+    const payload = { name: "test", rtsp_url: "rtsp://192.168.1.10/live0", enabled: false, expected_revision: 1 };
+    const ctx = {
+      params: { id: "ee:4d:fe:90:97:3d", channelID: "CH-BE5F54F4" },
+      path: "/edgeCloud/devices/ee:4d:fe:90:97:3d/video-channels/CH-BE5F54F4",
+      request: { body: payload },
+      fs: { logger: { error() {} } },
+      app: { fs: { edgeCloudRequest: {
+        put(path, options) { return request.put(`${root}/${path}`).send(options.data).then(res => res.body); },
+      } } },
+    };
+
+    await updateVideoChannel(ctx);
+
+    assert.deepEqual(received, [{
+      method: "PUT",
+      url: "/api/v1/devices/ee%3A4d%3Afe%3A90%3A97%3A3d/video-channels/CH-BE5F54F4",
+      body: payload,
+    }]);
+    assert.equal(ctx.status, sample.status);
+    assert.deepEqual(ctx.body, { message });
+  });
+}

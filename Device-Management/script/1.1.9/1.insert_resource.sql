@@ -1,0 +1,1 @@
+INSERT INTO "public"."resource" ("code", "name", "parent_resource") VALUES ('ADDDEVICEMODEL', '添加设备型号', 'FIRMWARELIB');

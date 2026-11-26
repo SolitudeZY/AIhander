@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Node-Agent 本地七牛调试",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/start-agent.js",
+      "envFile": "${workspaceFolder}/agent-local.env",
+      "args": ["-p", "4700", "-f", "http://localhost:4700"]
+    }
+  ]
+}

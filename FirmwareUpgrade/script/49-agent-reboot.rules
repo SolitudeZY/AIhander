@@ -1,0 +1,12 @@
+// Install as root:root, mode 0644 in /etc/polkit-1/rules.d/.
+// Allow the kickpi account to request a normal reboot without authentication.
+// This applies to all processes of this account, including SSH sessions.
+// Do not add a system_unit check: not all board D-Bus builds expose that identity.
+// Multiple SSH sessions are expected during remote maintenance.
+polkit.addRule(function(action, subject) {
+    if (subject.user === "kickpi" &&
+        (action.id === "org.freedesktop.login1.reboot" ||
+         action.id === "org.freedesktop.login1.reboot-multiple-sessions")) {
+        return polkit.Result.YES;
+    }
+});

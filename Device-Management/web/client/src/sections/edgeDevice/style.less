@@ -1,0 +1,160 @@
+.edge-device {
+  .edge-page-title {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 700;
+    padding-left: 10px;
+    border-left: 3px solid #1677ff;
+    margin: 4px 0 14px;
+
+    small {
+      font-size: 12px;
+      color: #a3a9b4;
+      font-style: italic;
+      font-weight: 400;
+      margin-left: 8px;
+    }
+  }
+
+  .edge-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .edge-health-card {
+    .edge-health-value {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+    .edge-health-scale {
+      height: 6px;
+      border-radius: 4px;
+      background: #edf0f5;
+      overflow: hidden;
+      i {
+        display: block;
+        height: 100%;
+        background: #1677ff;
+        border-radius: 4px;
+        &.warn {
+          background: #fa8c16;
+        }
+      }
+    }
+  }
+
+  .edge-video {
+    height: 150px;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(145deg, #1b3138, #294953 45%, #14272c);
+    position: relative;
+    color: #d9f2f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    &.broken {
+      filter: saturate(0.25);
+    }
+    .edge-video-frame {
+      width: 55%;
+      height: 48%;
+      border: 2px solid rgba(82, 196, 26, 0.72);
+      position: relative;
+      &:after {
+        content: "识别区域";
+        position: absolute;
+        left: -2px;
+        top: -20px;
+        background: #52c41a;
+        color: #fff;
+        font-size: 11px;
+        padding: 1px 6px;
+      }
+    }
+    .edge-video-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 7px 10px;
+      background: rgba(0, 0, 0, 0.55);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+  }
+
+  .edge-evidence-thumb {
+    width: 116px;
+    height: 66px;
+    border-radius: 5px;
+    background: linear-gradient(135deg, #17323a, #2d5359);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    span {
+      position: absolute;
+      bottom: 3px;
+      right: 5px;
+      color: #fff;
+      font-size: 10px;
+    }
+  }
+
+
+  .edge-terminal {
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0e141d;
+    .edge-terminal-bar {
+      height: 40px;
+      background: #1d2838;
+      color: #d6deeb;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .edge-terminal-body {
+      min-height: 400px;
+      padding: 16px;
+      color: #c3d1e6;
+      font: 13px/1.7 Consolas, Monaco, monospace;
+      overflow: auto;
+    }
+  }
+}
+
+/* 证据图（详情抽屉 portal 到 body，必须是顶层规则） */
+.edge-exception-acknowledged {
+  > td { color: #8c8c8c !important; background: #fafafa !important; }
+}
+
+.edge-evidence-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  img {
+    max-width: 100%;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid #e8e8e8;
+    background: #fafafa;
+    cursor: pointer;
+  }
+}
+
+.edge-evidence-empty {
+  padding: 12px 0 16px;
+  color: #999;
+}

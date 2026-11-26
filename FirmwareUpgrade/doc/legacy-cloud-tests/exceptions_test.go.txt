@@ -1,0 +1,146 @@
+package main
+
+import (
+	"encoding/json"
+	"testing"
+	"time"
+
+	"firmwareupgrade/internal/protocol"
+)
+
+func exceptionPage(t *testing.T, a *app, query string) ([]exceptionRecord, int) {
+	t.Helper()
+	response := callCloud(a, "GET", "/api/v1/alarms?category=exceptions&"+query, "", "")
+	var page struct {
+		Items []exceptionRecord `json:"items"`
+		Total int               `json:"total"`
+	}
+	if response.Code != 200 || json.Unmarshal(response.Body.Bytes(), &page) != nil {
+		t.Fatal(response.Code, response.Body.String())
+	}
+	return page.Items, page.Total
+}
+
+func TestExceptionLifecycleAndFilters(t *testing.T) {
+	a := requirementsApp(t)
+	seedEventRecords(t, a)
+	if err := migrateExceptions(a.db); err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now().UTC().Add(-time.Minute)
+	observe := func(status, quality string, offset time.Duration) {
+		t.Helper()
+		err := a.observeChannelHealth("device-1", protocol.VideoChannelResult{ChannelID: "CH-1", Status: status, QualityStatus: quality, ObservedAt: start.Add(offset).Format(time.RFC3339Nano), RecoveryAction: "reconnect_channel"})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	observe("offline", "unknown", 0)
+	observe("offline", "unknown", time.Second)
+	observe("running", "normal", 0)              // stale healthy observation cannot close the fault
+	observe("stopped", "unknown", 2*time.Second) // disabling is not a successful self-check
+	observe("running", "unknown", 3*time.Second)
+	items, total := exceptionPage(t, a, "status=active")
+	if total != 1 || len(items) != 1 || items[0].Result != "none" || items[0].Rebooted || items[0].DurationSeconds < 50 {
+		t.Fatalf("active: %+v total=%d", items, total)
+	}
+	observe("running", "normal", 10*time.Second)
+	observe("running", "normal", 11*time.Second)
+	items, total = exceptionPage(t, a, "status=recovered&page_size=1")
+	if total != 2 || len(items) != 1 {
+		t.Fatalf("recovered: %+v total=%d", items, total)
+	}
+	recovery := items[0]
+	if recovery.RecordType != "recovery" || recovery.Type != "auto_recover" || recovery.RelatedID == 0 || recovery.DurationSeconds != 10 || recovery.Result != "passed" || recovery.AfterSelfCheck == "" || recovery.Action != "reconnect_channel" || recovery.Rebooted {
+		t.Fatalf("recovery: %+v", recovery)
+	}
+	items, total = exceptionPage(t, a, "type=channel_abnormal&record_type=exception&device_id=device-1")
+	if total != 1 || items[0].ID != recovery.RelatedID || items[0].Status != "recovered" {
+		t.Fatalf("exception: %+v", items)
+	}
+	_, total = exceptionPage(t, a, "device_id=device-2")
+	if total != 0 {
+		t.Fatal("cross-device filter leaked records")
+	}
+	observe("offline", "unknown", 12*time.Second)
+	_, total = exceptionPage(t, a, "status=active")
+	if total != 1 {
+		t.Fatal("new fault must create a new lifecycle")
+	}
+	for _, query := range []string{"type=bad", "status=bad", "record_type=bad", "page=0", "page_size=201"} {
+		response := callCloud(a, "GET", "/api/v1/alarms?category=exceptions&"+query, "", "")
+		if response.Code != 400 {
+			t.Fatal(query, response.Code)
+		}
+	}
+	response := callCloud(a, "GET", "/api/v1/alarms?type=channel_abnormal&status=active", "", "")
+	if response.Code != 200 {
+		t.Fatal(response.Body.String())
+	}
+	// Ordinary detection alerts remain separate and preserve their original total.
+	response = callCloud(a, "GET", "/api/v1/alarms?page=1", "", "")
+	var normal struct {
+		Total int `json:"total"`
+	}
+	if json.Unmarshal(response.Body.Bytes(), &normal) != nil || normal.Total != 3 {
+		t.Fatal(response.Body.String())
+	}
+}
+
+func TestHealthSourcesAndChannelMetadata(t *testing.T) {
+	a := requirementsApp(t)
+	seedRequirementsDevice(t, a)
+	now := time.Now().UTC()
+	if err := a.observeDeviceConnection("device-1", true, now); err != nil {
+		t.Fatal(err)
+	}
+	if _, total := exceptionPage(t, a, ""); total != 0 {
+		t.Fatal("initial connection is not a recovery")
+	}
+	if err := a.observeDeviceConnection("device-1", false, now.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.observeDeviceConnection("device-1", true, now.Add(5*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.observeDeviceConnection("device-1", false, now.Add(2*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if _, total := exceptionPage(t, a, "status=active"); total != 0 {
+		t.Fatal("stale disconnect reopened the fault")
+	}
+	status := protocol.VideoChannelResult{ChannelID: "CH-1", Status: "running", InputFPS: 24.5, Codec: "H264", Resolution: "1920x1080", DetectionStatus: "error", DetectionErrorCode: "E_MODEL_NOT_FOUND", ModelVersion: "selected.rknn", ObservedAt: now.Format(time.RFC3339Nano), PictureMetrics: &protocol.PictureMetrics{BlackScreen: 90}}
+	a.recordVideoChannelRuntimeStatus("device-1", status)
+	items, total := exceptionPage(t, a, "type=detection_abnormal")
+	if total != 1 || items[0].Target != "selected.rknn" || items[0].Reason != "模型文件不存在" {
+		t.Fatalf("model failure: %+v", items)
+	}
+	items, total = exceptionPage(t, a, "type=channel_abnormal")
+	if total != 1 || items[0].BeforeState != "running" {
+		t.Fatalf("picture failure: %+v", items)
+	}
+	var item videoChannelItem
+	applyRuntimeStatus(&item, status)
+	if item.InputFPS != 24.5 || item.QualityStatus != "black_screen" {
+		t.Fatalf("live metrics: %+v", item)
+	}
+	status.Codec, status.Resolution = "", ""
+	status.PictureMetrics = &protocol.PictureMetrics{}
+	status.DetectionStatus = "running"
+	status.ObservedAt = now.Add(time.Second).Format(time.RFC3339Nano)
+	a.recordVideoChannelRuntimeStatus("device-1", status)
+	saved := videoChannelItem{ID: "CH-1", DeviceID: "device-1"}
+	a.addVideoTestObservation(&saved)
+	if saved.Codec != "H264" || saved.Resolution != "1920x1080" {
+		t.Fatalf("persisted metadata: %+v", saved)
+	}
+	items, total = exceptionPage(t, a, "type=auto_recover&channel_id=CH-1")
+	if total != 2 {
+		t.Fatalf("recovery records: %+v", items)
+	}
+	for _, item := range items {
+		if item.Rebooted || item.Action != "none" {
+			t.Fatalf("invented recovery action: %+v", item)
+		}
+	}
+}

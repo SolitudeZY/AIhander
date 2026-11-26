@@ -1,0 +1,30 @@
+podTemplate {
+    node('pod-templ-jenkins-slave-common') {
+        env.IMAGE_NAME = "${IOT_IMAGES_REGISTRY}/${IOT}/${JOB_NAME}"
+        env.IMAGE_NAME_SHORT = "${IOT}/${JOB_NAME}"
+        env.SVN_Add = "${SVN_ADDRESS}/FS-DeviceManagementPlatform/trunk/api"
+        // Jenkins string parameters may override the image/registry for intranet builds.
+        env.NODE_BASE_IMAGE = env.NODE_BASE_IMAGE?.trim() ?: 'repository.anxinyun.cn/base-images/nodejs12:20.10.12.2'
+        env.NPM_REGISTRY = env.NPM_REGISTRY?.trim() ?: 'https://nexus.ngaiot.com/repository/fs-npm/'
+
+        stage('Checkout') {
+            deleteDir()
+            checkout([$class: 'SubversionSCM', filterChangelog: false, locations: [[cancelProcessOnExternalsFail: true, credentialsId: 'svn-build', depthOption: 'infinity', ignoreExternalsOption: true, local: '.', remote: "${SVN_Add}"]], quietOperation: true, workspaceUpdater: [$class: 'CheckoutUpdater']])
+        }
+        stage('Build Node API image') {
+            container('image-builder') {
+                sh '''
+                    set -eu
+                    test -f package-lock.json
+                    test -f app/lib/service/agentGateway.js
+                    /kaniko/executor --context="dir://$PWD" --dockerfile="$PWD/Dockerfile" \
+                        --build-arg="NODE_BASE_IMAGE=$NODE_BASE_IMAGE" \
+                        --build-arg="NPM_REGISTRY=$NPM_REGISTRY" \
+                        --destination="$IMAGE_NAME:$IMAGE_VERSION" --cache=false --cleanup
+                '''
+            }
+            buildName "${IMAGE_NAME_SHORT}:${IMAGE_VERSION}"
+            buildDescription "${IMAGE_NAME}:${IMAGE_VERSION}"
+        }
+    }
+}

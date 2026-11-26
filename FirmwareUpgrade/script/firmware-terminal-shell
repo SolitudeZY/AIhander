@@ -1,0 +1,20 @@
+#!/bin/sh
+# Fixed Linux terminal entry point. Install as root:root, mode 0755 at
+# /usr/local/libexec/firmware-terminal-shell; all parents must be root-owned,
+# non-symlink directories without group/world write permission.
+set -eu
+
+[ "$#" -eq 0 ] || { echo 'terminal launcher accepts no arguments' >&2; exit 1; }
+# This example is deliberately pinned to edgeops and /home/edgeops.
+# Changing terminal.run_as_user requires reviewing this file and sudoers together.
+[ "$(/usr/bin/id -un)" = edgeops ] && [ "$(/usr/bin/id -u)" != 0 ] || {
+    echo 'terminal launcher requires the unprivileged edgeops account' >&2
+    exit 1
+}
+umask 077
+cd /home/edgeops
+exec /usr/bin/env -i \
+    HOME=/home/edgeops USER=edgeops LOGNAME=edgeops \
+    PATH=/usr/bin:/bin TERM=xterm-256color LANG=C.UTF-8 \
+    SHELL=/bin/bash FW_TERMINAL_ISOLATED=1 \
+    /bin/bash --noprofile --rcfile /usr/local/libexec/firmware-terminal-bashrc -i
