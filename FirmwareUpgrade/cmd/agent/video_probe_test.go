@@ -25,12 +25,12 @@ func TestVideoProbeResultAndFailures(t *testing.T) {
 	}{
 		{name: "video", data: `{"streams":[{"codec_name":"h264","width":1920,"height":1080}]}`, success: true},
 		{name: "audio only", data: `{"streams":[]}`},
-		{name: "network failure", err: errors.New("rtsp://admin:secret@camera/live")},
+		{name: "network failure", err: errors.New("rtsp://tester:secret@camera/live")},
 		{name: "missing ffprobe", err: exec.ErrNotFound, code: "probe_unavailable"},
 		{name: "invalid response", data: `broken`, code: "probe_failed"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			result := probeVideoWithRunner(context.Background(), protocol.VideoTestRequest{RTSPURL: "rtsp://admin:secret@camera/live", Transport: "tcp"}, func(_ context.Context, request protocol.VideoTestRequest) ([]byte, error) {
+			result := probeVideoWithRunner(context.Background(), protocol.VideoTestRequest{RTSPURL: "rtsp://tester:secret@camera/live", Transport: "tcp"}, func(_ context.Context, request protocol.VideoTestRequest) ([]byte, error) {
 				if request.Transport != "tcp" || !strings.Contains(request.RTSPURL, "secret") {
 					t.Fatal("device probe lost credentials")
 				}
@@ -106,7 +106,7 @@ func TestVideoProbeRealFFprobeLocalFailure(t *testing.T) {
 	address := listener.Addr().String()
 	listener.Close()
 	started := time.Now()
-	result := probeVideo(context.Background(), protocol.VideoTestRequest{RTSPURL: "rtsp://user:secret@" + address + "/live", Transport: "tcp"})
+	result := probeVideo(context.Background(), protocol.VideoTestRequest{RTSPURL: "rtsp://tester:secret@" + address + "/live", Transport: "tcp"})
 	if result.Success || strings.Contains(result.Message, "secret") || time.Since(started) > 10*time.Second {
 		t.Fatal(result)
 	}

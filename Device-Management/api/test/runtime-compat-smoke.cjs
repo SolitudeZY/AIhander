@@ -134,7 +134,7 @@ async function terminalSmoke(app) {
     await qiniu.remove(remote);
     qiniu.manager.delete = (bucket, key, callback) => callback(null);
     await assert.rejects(qiniu.remove(remote), { status: 503 });
-    let saved = { channelId: "camera-1", name: "temp", rtspUrl: "rtsp://admin:qa-only@camera.test/live", transport: "TCP", enabled: true, moduleName: "model.rknn", revision: 1 };
+    let saved = { channelId: "camera-1", name: "temp", rtspUrl: "rtsp://tester:qa-only@camera.test/live", transport: "TCP", enabled: true, moduleName: "model.rknn", revision: 1 };
     await s.receive("smoke-board", { cmd: "channelStatusChanged", values: { channelId: "camera-1", status: "offline", detectionStatus: "error", revision: 1, observedAt: new Date(Date.now() - 1000).toISOString() } });
     app.fs.agentHub.request = async (id, cmd, values) => {
       if (cmd === "channelList") return { operate: true, channels: [saved] };

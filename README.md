@@ -491,7 +491,7 @@ python deploy.py
 - 前端固件操作 token 改为 `REPLACE_WITH_FIRMWARE_OPERATION_TOKEN`，请通过后端/环境配置注入，勿写死；
 - 运行时配置请使用 `.env`、`agent-local.env`（本地私有副本）或部署平台注入，不要提交本机配置。
 
-仓库内仍保留少量**内网地址（10.8.x.x / 192.168.x.x）与测试用假凭据**（单测 fixture、文档示例），它们不是可用凭据；如需彻底匿名化可自行替换。仓库未附带 `LICENSE` 文件，商用/二次分发前请联系代码作者确认授权。
+仓库内仍保留少量**内网地址（10.8.x.x / 192.168.x.x）与合成测试值**（单测 fixture 使用 `camera.test`、`tester:*`、`SuperSecret` 等；文档示例使用 `user:password` / `填写摄像头密码`），它们不是可用凭据；如需彻底匿名化可自行替换。仓库未附带 `LICENSE` 文件，商用/二次分发前请联系代码作者确认授权。
 
 ---
 

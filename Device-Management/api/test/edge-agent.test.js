@@ -96,7 +96,7 @@ test("acknowledged live stream faults do not hide a different new inference faul
 
 test("disabling an uppercase TCP legacy channel preserves credentials and closes active faults", async t => {
   const f = await fixture(t); await board(f);
-  const saved = { channelId: "camera-1", name: "channl", rtspUrl: "rtsp://admin:secret@camera.test/live", enabled: true, moduleName: "model.rknn", transport: "TCP", revision: 1 };
+  const saved = { channelId: "camera-1", name: "channl", rtspUrl: "rtsp://tester:secret@camera.test/live", enabled: true, moduleName: "model.rknn", transport: "TCP", revision: 1 };
   await f.service.receive("board-1", { cmd: "channelStatusChanged", values: { channelId: saved.channelId, status: "offline", detectionStatus: "error", observedAt: "2026-10-10T10:00:00Z" } });
   let sent;
   f.app.fs.agentHub.request = async (id, cmd, values) => {
@@ -131,7 +131,7 @@ test("querying an already disabled channel closes stale faults without making th
 
 test("channel update preserves omitted password, redacts credentials and enforces optimistic revision", async t => {
   const f = await fixture(t); await board(f);
-  const saved = { channelId: "camera-1", name: "camera", rtspUrl: "rtsp://operator:secret@camera.test/live", enabled: true, moduleName: "model.rknn", revision: 3 };
+  const saved = { channelId: "camera-1", name: "camera", rtspUrl: "rtsp://tester:secret@camera.test/live", enabled: true, moduleName: "model.rknn", revision: 3 };
   const requests = [];
   f.app.fs.agentHub.request = async (deviceId, cmd, values) => {
     requests.push({ deviceId, cmd, values });
@@ -146,7 +146,7 @@ test("channel update preserves omitted password, redacts credentials and enforce
   assert.equal(JSON.stringify(ctx.body).includes("secret"), false);
   ctx = context(f, { name: "renamed", rtsp_url: "rtsp://camera.test/live", username: "operator", enabled: true, expected_revision: 2 }, { id: "board-1", channelID: "camera-1" });
   await api.updateVideoChannel(ctx); assert.equal(ctx.status, 409);
-  ctx = context(f, { name: "new", rtsp_url: "rtsp://operator:secret@camera.test/live", model_name: "model.rknn", enabled: true }, { id: "board-1" });
+  ctx = context(f, { name: "new", rtsp_url: "rtsp://tester:secret@camera.test/live", model_name: "model.rknn", enabled: true }, { id: "board-1" });
   await api.createVideoChannel(ctx); assert.equal(ctx.status, 400);
   ctx = context(f, { name: "new", rtsp_url: "rtsp://camera.test/live", username: "operator", model_name: "../escape.rknn", enabled: true }, { id: "board-1" });
   await api.createVideoChannel(ctx); assert.equal(ctx.status, 400);
@@ -154,7 +154,7 @@ test("channel update preserves omitted password, redacts credentials and enforce
 
 test("testing a saved channel reuses its credentials and transport without leaking them", async t => {
   const f = await fixture(t); await board(f);
-  const saved = { channelId: "camera-1", name: "camera", rtspUrl: "rtsp://operator:secret@camera.test/live", enabled: true, moduleName: "model.rknn", transport: "udp", revision: 3 };
+  const saved = { channelId: "camera-1", name: "camera", rtspUrl: "rtsp://tester:secret@camera.test/live", enabled: true, moduleName: "model.rknn", transport: "udp", revision: 3 };
   f.app.fs.agentHub.request = async (id, cmd, values) => {
     if (cmd === "channelList") return { channels: [saved] };
     assert.equal(cmd, "channelTest");

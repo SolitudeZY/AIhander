@@ -23,7 +23,7 @@
     "channelId": "CH-BE5F54F4",
     "name": "test",
     "enabled": true,
-    "rtspUrl": "rtsp://admin:admin@192.168.1.10/live0",
+    "rtspUrl": "rtsp://REPLACE_WITH_CAMERA_USER:REPLACE_WITH_CAMERA_PASSWORD@192.168.1.10/live0",
     "transport": "tcp",
     "moduleName": "landslide_yolov8n_seedance_hard_r2_20260827_int8_rk3576.rknn",
     "revision": 1,

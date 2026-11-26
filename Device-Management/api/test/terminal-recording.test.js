@@ -48,6 +48,7 @@ test("unmatched, repeated, malformed and interrupted results never fabricate a s
   assert.equal(recordingDetail(other.document).commands[0].exitCode, 1);
 });
 
+// 本文件中的 SuperSecret / PRIVATE KEY 片段均为合成测试输入，不包含真实密钥。
 test("command metadata is redacted and bounded just like input, including multiline secrets", () => {
   for (const command of ["curl --password SuperSecret", "token=SuperSecret", "echo ok\npassword=SuperSecret", "-----BEGIN PRIVATE KEY-----\nSuperSecret", "x".repeat(9000)]) {
     const r = new TerminalRecording();
@@ -83,7 +84,7 @@ test("credential fields, headers, commands and URLs are redacted at every frame 
   const samples = [
     'curl --password SuperSecret', 'TOKEN=SuperSecret', '{"refresh_token": "SuperSecret"}',
     'Authorization: Bearer SuperSecret', 'Proxy-Authorization: Basic SuperSecret', 'Cookie: x=SuperSecret',
-    'Set-Cookie: id=SuperSecret', 'rtsp://admin:SuperSecret@192.168.1.10/live0',
+    'Set-Cookie: id=SuperSecret', 'rtsp://tester:SuperSecret@192.168.1.10/live0',
     'https://example.test/?api_key=SuperSecret', 'sshpass -p SuperSecret ssh board',
     'chpasswd SuperSecret', 'client-secret: SuperSecret', 'pass\x1b[31mword=SuperSecret',
   ];
